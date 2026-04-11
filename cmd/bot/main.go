@@ -2,23 +2,33 @@ package main
 
 import (
 	"SplitCore/internal/delivery/telegram"
-	"log"
+	"SplitCore/internal/repository/postgres"
+	"context"
+	"log/slog"
 	"os"
 	"time"
 
 	"github.com/joho/godotenv"
 	tele "gopkg.in/telebot.v4"
-	"gopkg.in/telebot.v4/middleware"
 )
 
 func main() {
+	ctx := context.Background()
+
+	logger := slog.New(slog.NewTextHandler(os.Stdout, &slog.HandlerOptions{
+		Level: slog.LevelDebug,
+	}))
+	slog.SetDefault(logger)
+
 	if err := godotenv.Load(".env"); err != nil {
-		log.Fatal("Error loading .env file")
+		slog.Error("Error loading .env file", "error", err)
+		os.Exit(1)
 	}
 
 	token := os.Getenv("TOKEN")
 	if token == "" {
-		log.Fatal("BOT_TOKEN env var is missing")
+		slog.Error("BOT_TOKEN env var is missing")
+		os.Exit(1)
 	}
 
 	settings := tele.Settings{
@@ -26,17 +36,24 @@ func main() {
 		Poller: &tele.LongPoller{Timeout: 10 * time.Second},
 	}
 
-	b, err := tele.NewBot(settings)
-
+	pool, err := postgres.NewPostgresPool(ctx, os.Getenv("DB_URL"))
 	if err != nil {
-		log.Fatal(err)
+		slog.Error("Error connecting to database", "error", err)
+		os.Exit(1)
 	}
-	b.Use(middleware.Recover())
-	b.Use(middleware.Logger())
 
-	h := telegram.NewBotHandler()
-	h.Register(b)
+	userRepository := postgres.NewUserRepository(pool)
+	fundRepository := postgres.NewFundRepository(pool)
 
-	log.Println("Bot is running...")
+	b, err := tele.NewBot(settings)
+	if err != nil {
+		slog.Error("Error creating bot", "error", err)
+		os.Exit(1)
+	}
+
+	h := telegram.NewBotHandler(userRepository, fundRepository)
+	h.SetupRegister(b)
+
+	slog.Info("Starting bot", "version", "1.0.0", "env", "dev")
 	b.Start()
 }

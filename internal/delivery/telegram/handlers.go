@@ -1,9 +1,16 @@
 package telegram
 
-import tele "gopkg.in/telebot.v4"
+import (
+	"SplitCore/internal/repository"
+	"log/slog"
+
+	tele "gopkg.in/telebot.v4"
+)
 
 type BotHandler struct {
 	userState map[int64]State
+	userRepo  repository.UserRepository
+	fundRepo  repository.FundRepository
 }
 
 type State int
@@ -20,9 +27,12 @@ const (
 	CommandBack       = "back"
 )
 
-func NewBotHandler() *BotHandler {
+func NewBotHandler(userRepository repository.UserRepository, fundRepository repository.FundRepository) *BotHandler {
+	slog.Info("Setting up telegram bot")
 	return &BotHandler{
 		userState: make(map[int64]State),
+		userRepo:  userRepository,
+		fundRepo:  fundRepository,
 	}
 }
 
@@ -52,12 +62,14 @@ func (h *BotHandler) BackMenu() *tele.ReplyMarkup {
 
 //--------------Router--------------
 
-func (h *BotHandler) Register(b *tele.Bot) {
+func (h *BotHandler) SetupRegister(b *tele.Bot) {
+	b.Use(LoggingMiddleware())
 	b.Handle("/start", h.HandleStart)
 	b.Handle("\f"+CommandCreateFund, h.HandleCreateFund)
 	b.Handle("\f"+CommandMyFund, h.HandleMyFund)
 	b.Handle("\f"+CommandJoinFund, h.HandleJoinFund)
 	b.Handle("\f"+CommandBack, h.HandleBack)
+	slog.Info("Setting up handlers")
 }
 
 //-------------Handlers-----------
@@ -76,7 +88,6 @@ func (h *BotHandler) HandleCreateFund(c tele.Context) error {
 func (h *BotHandler) HandleBack(c tele.Context) error {
 	id := c.Callback().Sender.ID
 	h.userState[id] = StateNone
-
 	return c.Edit("Menu:", h.MainMenu())
 }
 
