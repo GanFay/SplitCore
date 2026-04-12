@@ -12,7 +12,7 @@ func LoggingMiddleware() tele.MiddlewareFunc {
 			user := c.Sender()
 			text := c.Text()
 			if c.Callback() != nil {
-				text = "callback: " + c.Callback().Data
+				text = "callback: " + c.Callback().Unique
 			}
 
 			slog.Info("incoming update",

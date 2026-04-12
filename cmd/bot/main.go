@@ -50,7 +50,6 @@ func main() {
 		slog.Error("Error creating bot", "error", err)
 		os.Exit(1)
 	}
-
 	h := telegram.NewBotHandler(userRepository, fundRepository)
 	h.SetupRegister(b)
 
