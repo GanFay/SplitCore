@@ -52,9 +52,15 @@ func (r *FundRepository) Create(ctx context.Context, fund *domain.Fund) (*domain
 	return fund, err
 }
 
-func (r *FundRepository) GetByInviteCode(ctx context.Context, code string) (*domain.Fund, error) {
+func (r *FundRepository) GetInfo(ctx context.Context, reqFund *domain.Fund) (*domain.Fund, error) {
 	var fund domain.Fund
-	err := r.DB.QueryRow(ctx, `SELECT id, name, author_id, invite_code, created_at FROM funds WHERE invite_code = $1`, code).Scan(
+	query := `
+		SELECT id, name, author_id, invite_code, created_at 
+		FROM funds 
+		WHERE id = $1 OR (invite_code = $2 AND $2 <> '') 
+		LIMIT 1`
+
+	err := r.DB.QueryRow(ctx, query, reqFund.ID, reqFund.InviteCode).Scan(
 		&fund.ID, &fund.Name, &fund.AuthorID, &fund.InviteCode, &fund.CreatedAt)
 	if err != nil {
 		return nil, err
@@ -62,22 +68,30 @@ func (r *FundRepository) GetByInviteCode(ctx context.Context, code string) (*dom
 	return &fund, nil
 }
 
-func (r *FundRepository) GetByUserID(ctx context.Context, userID int64, limit string, offset string) ([]domain.Fund, error) {
-	var funds []domain.Fund
-	query, err := r.DB.Query(ctx, `SELECT id, name, author_id, invite_code, created_at FROM funds WHERE author_id = $1 LIMIT $2 OFFSET $3`, userID, limit, offset)
+func (r *FundRepository) GetByUserID(ctx context.Context, userID int64, limit int, offset int) ([]domain.Fund, error) {
+	query := `
+        SELECT f.id, f.name, f.author_id, f.invite_code, f.created_at
+        FROM funds f
+        JOIN fund_members fm ON f.id = fm.fund_id
+        WHERE fm.user_id = $1
+        ORDER BY f.created_at DESC
+        LIMIT $2 OFFSET $3`
+
+	allFunds, err := r.DB.Query(ctx, query, userID, limit, offset)
 	if err != nil {
 		slog.Debug(err.Error())
 		return nil, err
 	}
-	for query.Next() {
+	var funds []domain.Fund
+	for allFunds.Next() {
 		var fund domain.Fund
-		err = query.Scan(&fund.ID, &fund.Name, &fund.AuthorID, &fund.InviteCode, &fund.CreatedAt)
+		err = allFunds.Scan(&fund.ID, &fund.Name, &fund.AuthorID, &fund.InviteCode, &fund.CreatedAt)
 		if err != nil {
 			return nil, err
 		}
 		funds = append(funds, fund)
 	}
-	defer query.Close()
+	defer allFunds.Close()
 	return funds, nil
 }
 

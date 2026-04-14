@@ -9,11 +9,11 @@ import (
 
 const words = "qwertyuiopasdfghjklzxcvbnmQWERTYUIOPASDFGHJKLZXCVBNM1234567890"
 
-func GenerateInviteCode(lenS int) string {
+func GenerateInviteCode(lenCode int) string {
 	slice := strings.Split(words, "")
 	var sliceIC []string
 	slog.Debug("slice words", "slice: ", slice)
-	for i := 0; i < lenS; i++ {
+	for i := 0; i < lenCode; i++ {
 		randW := rand.IntN(62)
 		slog.Debug("Random Num", "randW: ", randW)
 		tempIC := slice[randW]

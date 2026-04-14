@@ -50,7 +50,7 @@ func main() {
 
 	pool, err := postgres.NewPostgresPool(ctx, url)
 	if err != nil {
-		slog.Error("Error connecting to database", "error", err)
+		slog.Error("Error connecting to database", "err", err)
 		os.Exit(1)
 	}
 
@@ -59,12 +59,12 @@ func main() {
 
 	b, err := tele.NewBot(settings)
 	if err != nil {
-		slog.Error("Error creating bot", "error", err)
+		slog.Error("Error creating bot", "err", err)
 		os.Exit(1)
 	}
 	h := telegram.NewBotHandler(userRepository, fundRepository)
 	h.SetupRegister(b)
-
-	slog.Info("Starting bot", "version", "1.0.0", "env", "dev")
+	vBot := os.Getenv("BOT_VER")
+	slog.Info("Starting bot", "version", vBot, "env", "dev")
 	b.Start()
 }
