@@ -11,6 +11,27 @@ services:
       - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${PG_USER} -d ${PG_DB}"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+  app:
+    build: .
+    container_name: split_core_app
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PG_HOST: db
+      PG_PORT: 5432
+
+networks:
+  default:
+    name: split_network
 
 volumes:
   postgres_data:
