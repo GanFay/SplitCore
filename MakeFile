@@ -1,8 +1,19 @@
 include .env
-export .env
+export
+
+export PROJECT_ROOT=$(shell pwd)
+
+
+
+DB_URL = postgresql://${PG_USER}:${PG_PASS}@db:${PG_PORT}/${PG_DB}?sslmode=disable
+
 
 migrations-up:
-	migrate -source file://internal/repository/postgres_migrations -database ${DB_URL} up
+	docker compose run --rm migrate \
+		-source file:///migrations \
+		-database $(DB_URL) up
 
 migrations-down:
-	migrate -source file://internal/repository/postgres_migrations -database ${DB_URL} down
+	docker compose run --rm migrate \
+		-source file:///migrations \
+		-database $(DB_URL) down

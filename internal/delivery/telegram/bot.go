@@ -3,12 +3,14 @@ package telegram
 import (
 	"SplitCore/internal/repository"
 	"log/slog"
+	"sync"
 )
 
 type BotHandler struct {
 	userState map[int64]*UserContext
 	userRepo  repository.UserRepository
 	fundRepo  repository.FundRepository
+	mu        sync.RWMutex
 }
 
 type State int

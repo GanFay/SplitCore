@@ -28,6 +28,10 @@ services:
     environment:
       PG_HOST: db
       PG_PORT: 5432
+  migrate:
+    image: migrate/migrate:v4.19.1
+    volumes:
+      - ${PROJECT_ROOT}/internal/repository/postgres_migrations:/migrations
 
 networks:
   default:

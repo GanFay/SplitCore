@@ -12,9 +12,13 @@ import (
 )
 
 func (h *BotHandler) HandleStart(c tele.Context) error {
+	defer c.Respond()
+
+	h.mu.Lock()
 	if h.userState[c.Sender().ID] == nil {
 		h.userState[c.Sender().ID] = &UserContext{State: StateNone}
 	}
+	h.mu.Unlock()
 	ctx := context.Background()
 	var user domain.User
 	user.TgID = c.Sender().ID
@@ -56,18 +60,25 @@ func (h *BotHandler) HandleStart(c tele.Context) error {
 }
 
 func (h *BotHandler) HandleBack(c tele.Context) error {
+	defer c.Respond()
+
 	id := c.Sender().ID
+	h.mu.Lock()
 	if h.userState[id] == nil {
 		h.userState[id] = &UserContext{
 			State: StateNone,
 		}
 	}
 	h.userState[id].State = StateNone
+	h.mu.Unlock()
+
 	msg := "👋 Hello! I'm your expense helper. Use the menu below👇"
 	return c.Edit(msg, h.MainMenu(), tele.ModeHTML)
 }
 
 func (h *BotHandler) OnText(c tele.Context) error {
+	defer c.Respond()
+
 	id := c.Sender().ID
 	err := c.Delete()
 	if err != nil {
@@ -94,8 +105,9 @@ func (h *BotHandler) OnText(c tele.Context) error {
 		if err != nil {
 			return h.Error(c, "Failed to create fund", err.Error(), Edit)
 		}
-
+		h.mu.Lock()
 		storedMsg := &tele.Message{ID: h.userState[id].LastMsgID, Chat: c.Chat()}
+		h.mu.Unlock()
 		msg := fmt.Sprintf("Fund Created🎉!\n\nFund Code🔑: <code>%s</code>\nFund URL🌐: <code>%s</code>\n\n You can share URL or Code with users your fund👍", fund.InviteCode, InviteCodeInviteURL)
 		ctxMsg, err := c.Bot().Edit(storedMsg, msg, h.BackMenu(), tele.ModeHTML)
 		if err != nil {
@@ -103,6 +115,7 @@ func (h *BotHandler) OnText(c tele.Context) error {
 		}
 		h.userState[id].LastMsgID = ctxMsg.ID
 	case StateFundJoinCode:
+
 		fund := &domain.Fund{
 			InviteCode: text,
 		}
@@ -115,8 +128,9 @@ func (h *BotHandler) OnText(c tele.Context) error {
 		if err != nil {
 			return h.Error(c, "Failed to join the fund", err.Error(), Edit)
 		}
-
+		h.mu.Lock()
 		storedMsg := &tele.Message{ID: h.userState[id].LastMsgID, Chat: c.Chat()}
+		h.mu.Unlock()
 		msg := "You successfully joined to fund🎉\n\n" +
 			"Go to <b>My Fund</b> to see this⬇️."
 		ctxMsg, err := c.Bot().Edit(storedMsg, msg, h.BackMenu(), tele.ModeHTML)
@@ -137,11 +151,15 @@ func (h *BotHandler) OnText(c tele.Context) error {
 	default:
 		panic("You have unstatement case")
 	}
+	h.mu.Lock()
 	h.userState[id].State = StateNone
+	h.mu.Unlock()
 	return nil
 }
 
 func (h *BotHandler) Error(c tele.Context, userMsg string, techMsg string, mode SendMode) error {
+	defer c.Respond()
+	
 	slog.Error(userMsg, "err", techMsg, "user_id", c.Sender().ID)
 	storedMsg := &tele.Message{ID: h.userState[c.Sender().ID].LastMsgID, Chat: c.Chat()}
 	switch mode {
