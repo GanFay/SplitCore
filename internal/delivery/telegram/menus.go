@@ -31,6 +31,20 @@ func (h *BotHandler) BackMenu() *tele.ReplyMarkup {
 	return &menu
 }
 
+func (h *BotHandler) FundViewMenu() *tele.ReplyMarkup {
+	menu := tele.ReplyMarkup{ResizeKeyboard: true}
+	btnLogExp := menu.Data("➕ Log Expense", CommandLogExpense)
+	btnBal := menu.Data("📊 Settle Up", CommandBalance)
+	btnMembers := menu.Data("Member", CommandMembers)
+	btnBack := menu.Data("Back", CommandBack)
+	menu.Inline(
+		menu.Row(btnLogExp),
+		menu.Row(btnBal),
+		menu.Row(btnMembers),
+		menu.Row(btnBack))
+	return &menu
+}
+
 func (h *BotHandler) MyFundMenu(c tele.Context, offset int) *tele.ReplyMarkup {
 
 	ctx := context.Background()
@@ -38,7 +52,7 @@ func (h *BotHandler) MyFundMenu(c tele.Context, offset int) *tele.ReplyMarkup {
 	limit := 5
 	fundsMembers, err := h.fundRepo.GetByUserID(ctx, c.Sender().ID, limit, offset)
 	if err != nil {
-		err := h.Error(c, "Failed to get your funds", err.Error(), Edit)
+		err := h.error(c, "Failed to get your funds", err.Error(), Edit)
 		if err != nil {
 			slog.Error(err.Error())
 			return nil

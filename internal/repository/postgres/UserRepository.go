@@ -24,3 +24,13 @@ func (r *UserRepository) Create(ctx context.Context, u *domain.User) (*domain.Us
 	RETURNING created_at`, u.TgID, u.Username, u.FirstName).Scan(&u.CreatedAt)
 	return u, err
 }
+
+func (r *UserRepository) Get(ctx context.Context, tgID int64) (*domain.User, error) {
+	var u domain.User
+	u.TgID = tgID
+	err := r.DB.QueryRow(ctx, `SELECT username, first_name, created_at FROM users WHERE tg_id = $1`, tgID).Scan(&u.Username, &u.FirstName, &u.CreatedAt)
+	if err != nil {
+		return nil, err
+	}
+	return &u, nil
+}

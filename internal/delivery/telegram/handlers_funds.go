@@ -6,111 +6,177 @@ import (
 	"fmt"
 	"log/slog"
 	"strconv"
+	"time"
+	_ "time/tzdata"
 
 	tele "gopkg.in/telebot.v4"
 )
 
 func (h *BotHandler) HandleCreateFund(c tele.Context) error {
-	defer c.Respond()
+	defer func(c tele.Context, resp ...*tele.CallbackResponse) {
+		err := c.Respond(resp...)
+		if err != nil {
+			slog.Error("Failed to respond to create fund message", "err", err)
+		}
+	}(c)
 
 	id := c.Sender().ID
 	h.mu.Lock()
-	if h.userState[id] == nil {
-		h.userState[id] = &UserContext{}
-	}
-	h.userState[id].State = StateFundName
-	h.userState[id].LastMsgID = c.Message().ID
+	ctxUser := h.fetchContext(id)
+	ctxUser.State = StateWaitFundName
+	ctxUser.LastMsgID = c.Message().ID
 	h.mu.Unlock()
 	msg := "Enter the desired fund name (any name)👇"
-	return c.Edit(msg, h.BackMenu(), tele.ModeHTML)
-}
-
-func (h *BotHandler) HandleMyFund(c tele.Context) error {
-	defer c.Respond()
-
-	msg := "Your funds👇"
-	h.mu.Lock()
-	h.userState[c.Sender().ID] = &UserContext{
-		State:     StateFundMenu,
-		LastMsgID: c.Message().ID,
-	}
-	h.mu.Unlock()
-	return c.Edit(msg, h.MyFundMenu(c, 0), tele.ModeHTML)
+	storedMsg := &tele.Message{ID: ctxUser.LastMsgID, Chat: c.Chat()}
+	_, err := c.Bot().Edit(storedMsg, msg, h.BackMenu(), tele.ModeHTML)
+	return err
 }
 
 func (h *BotHandler) HandleJoinFund(c tele.Context) error {
-	defer c.Respond()
+	defer func(c tele.Context, resp ...*tele.CallbackResponse) {
+		err := c.Respond(resp...)
+		if err != nil {
+			slog.Error("Failed to respond to join fund message", "err", err)
+			return
+		}
+	}(c)
 
 	id := c.Sender().ID
 	h.mu.Lock()
-	if h.userState[id] == nil {
-		h.userState[id] = &UserContext{
-			State: StateFundJoinCode,
-		}
-	}
-	h.userState[id].State = StateFundJoinCode
-	h.userState[id].LastMsgID = c.Message().ID
+	ctxUser := h.fetchContext(id)
+	ctxUser.State = StateWaitFundJoinCode
+	ctxUser.LastMsgID = c.Message().ID
 	h.mu.Unlock()
 	msg := "Input Join Code🔑:\n\n" +
 		"You can get an invite code by asking the fund's creator🧍‍♂️\nOr create one yourself"
-	return c.Edit(msg, h.BackMenu(), tele.ModeHTML)
+	storedMsg := &tele.Message{ID: ctxUser.LastMsgID, Chat: c.Chat()}
+	_, err := c.Bot().Edit(storedMsg, msg, h.BackMenu(), tele.ModeHTML)
+	return err
 }
 
-func (h *BotHandler) HandleNext(c tele.Context) error {
-	defer c.Respond()
+func (h *BotHandler) HandleMyFund(c tele.Context) error {
+	defer func(c tele.Context, resp ...*tele.CallbackResponse) {
+		err := c.Respond(resp...)
+		if err != nil {
+			slog.Error("Failed to respond to callback", "err", err)
+			return
+		}
+	}(c)
+
+	msg := "Your funds👇"
+	h.mu.Lock()
+	ctxUser := h.fetchContext(c.Sender().ID)
+	ctxUser.State = StateFundMenu
+	ctxUser.LastMsgID = c.Message().ID
+	h.mu.Unlock()
+	storedMsg := &tele.Message{ID: ctxUser.LastMsgID, Chat: c.Chat()}
+	_, err := c.Bot().Edit(storedMsg, msg, h.MyFundMenu(c, 0), tele.ModeHTML)
+	return err
+}
+
+func (h *BotHandler) HandleNextPrevious(c tele.Context) error {
+	defer func(c tele.Context, resp ...*tele.CallbackResponse) {
+		err := c.Respond(resp...)
+		if err != nil {
+			slog.Error("Failed to respond to next/previous message", "err", err)
+			return
+		}
+	}(c)
 
 	offset, err := strconv.Atoi(c.Data())
 	h.mu.Lock()
-
-	h.userState[c.Sender().ID] = &UserContext{
-		LastMsgID: c.Message().ID,
-	}
+	ctxUser := h.fetchContext(c.Sender().ID)
+	ctxUser.LastMsgID = c.Message().ID
 	h.mu.Unlock()
 	if err != nil {
-		return h.Error(c, "Internal Error, try again later", err.Error(), Edit)
+		return h.error(c, "Internal Error, try again later", err.Error(), Edit)
 	}
-	return c.Edit(h.MyFundMenu(c, offset), tele.ModeHTML)
-}
-
-func (h *BotHandler) HandlePrevious(c tele.Context) error {
-	defer c.Respond()
-
-	offset, err := strconv.Atoi(c.Data())
-	h.mu.Lock()
-	h.userState[c.Sender().ID] = &UserContext{
-		LastMsgID: c.Message().ID,
-	}
-	h.mu.Unlock()
-	if err != nil {
-		return h.Error(c, "Internal Error, try again later", err.Error(), Edit)
-	}
-	return c.Edit(h.MyFundMenu(c, offset), tele.ModeHTML)
+	storedMsg := &tele.Message{ID: ctxUser.LastMsgID, Chat: c.Chat()}
+	_, err = c.Bot().Edit(storedMsg, h.MyFundMenu(c, offset), tele.ModeHTML)
+	return err
 }
 
 func (h *BotHandler) HandleViewFund(c tele.Context) error {
-	defer c.Respond()
-
-	ctx := context.Background()
-	h.mu.Lock()
-	h.userState[c.Sender().ID] = &UserContext{
-		State:     StateViewFund,
-		LastMsgID: c.Message().ID,
-	}
-	h.mu.Unlock()
+	defer func(c tele.Context, resp ...*tele.CallbackResponse) {
+		err := c.Respond(resp...)
+		if err != nil {
+			slog.Error("Failed to respond to callback", "err", err)
+		}
+	}(c)
 	fundId, err := strconv.Atoi(c.Data())
 	if err != nil {
-
-		return h.Error(c, "Internal Error, try again later", err.Error(), Edit)
+		return h.error(c, "Internal Error, try again later", err.Error(), Edit)
 	}
+	h.mu.Lock()
+	ctxUser := h.fetchContext(c.Sender().ID)
+	ctxUser.ActiveFundID = fundId
+	h.mu.Unlock()
+	err = h.HandleFund(c)
+	if err != nil {
+		err = h.error(c, "Internal Error, try again later", err.Error(), Edit)
+	}
+	slog.Debug("", "id", fundId)
+	return err
+}
+
+func (h *BotHandler) HandleFund(c tele.Context) error {
+	defer func(c tele.Context, resp ...*tele.CallbackResponse) {
+		err := c.Respond(resp...)
+		if err != nil {
+			slog.Error("Failed to respond to view fund message", "err", err)
+			return
+		}
+	}(c)
+	h.mu.Lock()
+	ctxUser := h.fetchContext(c.Sender().ID)
+	ctxUser.LastMsgID = c.Message().ID
+	ctxUser.State = StateViewFund
+	h.mu.Unlock()
+	ctx := context.Background()
+
+	fundId := ctxUser.ActiveFundID
 	fund := &domain.Fund{
 		ID: fundId,
 	}
 	slog.Debug("", "id", fundId)
 
-	fund, err = h.fundRepo.GetInfo(ctx, fund)
+	fund, err := h.fundRepo.GetInfo(ctx, fund)
 	if err != nil {
-		return h.Error(c, "Internal Error, failed to get info about this fund, try again later", err.Error(), Edit)
+		return h.error(c, "Internal Error, failed to get info about this fund, try again later", err.Error(), Edit)
 	}
-	msg := fmt.Sprintf("Your fund⬇️:\n\nFundName: <code>%s</code>\nAuthorID: <code>%d</code>\nCreatedAt: <code>%s</code>\nInviteCode: <code>%s</code>", fund.Name, fund.AuthorID, fund.CreatedAt.Format(`02.01.2006 15:04`), fund.InviteCode)
+	author, err := h.userRepo.Get(ctx, fund.AuthorID)
+	if err != nil {
+		return h.error(c, "Internal Error, try again later", err.Error(), Edit)
+	}
+	location, err := time.LoadLocation("Europe/Kyiv")
+	if err != nil {
+		return h.error(c, "Internal Error, try again later", err.Error(), Edit)
+	}
+
+	msg := fmt.Sprintf("Your fund⬇️:\n\nFund name: <code>%s</code>\nAuthor: <code>%s</code>\nCreated at: <code>%s</code>\nInvite code: <code>%s</code>", fund.Name, author.Username, fund.CreatedAt.In(location).Format(`02.01.2006 15:04`), fund.InviteCode)
+	storedMsg := &tele.Message{ID: ctxUser.LastMsgID, Chat: c.Chat()}
+	_, err = c.Bot().Edit(storedMsg, msg, h.FundViewMenu(), tele.ModeHTML)
+	return err
+}
+
+func (h *BotHandler) HandleLogExpense(c tele.Context) error {
+	defer func(c tele.Context, resp ...*tele.CallbackResponse) {
+		err := c.Respond(resp...)
+		if err != nil {
+			slog.Error("Failed to respond to log-expense message", "err", err)
+		}
+	}(c)
+
+	h.mu.Lock()
+	ctxUser := h.fetchContext(c.Sender().ID)
+	ctxUser.LastMsgID = c.Message().ID
+	ctxUser.State = StateWaitExpense
+	h.mu.Unlock()
+	msg := fmt.Sprintf(
+		"💸 <b>Logging New Expense</b>\n\n" +
+			"Tell me how much you spent and what it was for.\n\n" +
+			"✍️ <b>Format:</b> <code>PRICE DESCRIPTION</code>\n" +
+			"<i>Example: 450 Meat and drinks</i>",
+	)
 	return c.Edit(msg, h.BackMenu(), tele.ModeHTML)
 }

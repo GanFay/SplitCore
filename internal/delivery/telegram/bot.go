@@ -16,8 +16,9 @@ type BotHandler struct {
 type State int
 
 type UserContext struct {
-	State     State
-	LastMsgID int
+	State        State
+	LastMsgID    int
+	ActiveFundID int
 }
 
 type SendMode int
@@ -30,10 +31,11 @@ const (
 
 const (
 	StateNone State = iota
-	StateFundName
-	StateFundJoinCode
+	StateWaitFundName
+	StateWaitFundJoinCode
 	StateFundMenu
 	StateViewFund
+	StateWaitExpense
 )
 const (
 	CommandCreateFund = "create_fund"
@@ -43,6 +45,9 @@ const (
 	CommandNext       = "next"
 	CommandPrevious   = "previous"
 	CommandFund       = "view_fund"
+	CommandLogExpense = "log_expense"
+	CommandBalance    = "balance"
+	CommandMembers    = "members"
 )
 
 func NewBotHandler(userRepository repository.UserRepository, fundRepository repository.FundRepository) *BotHandler {

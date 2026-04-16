@@ -13,9 +13,10 @@ func (h *BotHandler) SetupRegister(b *tele.Bot) {
 	b.Handle("\f"+CommandMyFund, h.HandleMyFund)
 	b.Handle("\f"+CommandJoinFund, h.HandleJoinFund)
 	b.Handle("\f"+CommandBack, h.HandleBack)
-	b.Handle("\f"+CommandNext, h.HandleNext)
-	b.Handle("\f"+CommandPrevious, h.HandlePrevious)
+	b.Handle("\f"+CommandNext, h.HandleNextPrevious)
+	b.Handle("\f"+CommandPrevious, h.HandleNextPrevious)
 	b.Handle("\f"+CommandFund, h.HandleViewFund)
+	b.Handle("\f"+CommandLogExpense, h.HandleLogExpense)
 	b.Handle(tele.OnText, h.OnText)
 	slog.Info("Setting up handlers")
 }
