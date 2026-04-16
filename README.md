@@ -6,7 +6,7 @@
 Users create "Funds" (events), invite friends via unique deep-links, and record their expenses. The bot automatically calculates the balance: who overpaid and who needs to settle their debt.
 
 ## 🛠 Tech Stack
-* **Language:** Go (Golang) 1.22+
+* **Language:** Go (Golang) 1.26.2
 * **Framework:** [telebot.v4](https://github.com/tucnak/telebot) (Telegram Bot API)
 * **Database:** PostgreSQL
 * **Driver:** [pgx/v5](https://github.com/jackc/pgx) (Connection Pool)
