@@ -173,10 +173,9 @@ func (h *BotHandler) HandleLogExpense(c tele.Context) error {
 	ctxUser.State = StateWaitExpense
 	h.mu.Unlock()
 	msg := fmt.Sprintf(
-		"💸 <b>Logging New Expense</b>\n\n" +
-			"Tell me how much you spent and what it was for.\n\n" +
-			"✍️ <b>Format:</b> <code>PRICE DESCRIPTION</code>\n" +
-			"<i>Example: 450 Meat and drinks</i>",
+		"🖋 <b>New Expense Entry</b>\n\n" +
+			"Send: <code>[price] [description]</code>\n\n" +
+			"💡 <i>Tip: Use a dot for cents, e.g. 15.50</i>",
 	)
 	return c.Edit(msg, h.BackMenu(), tele.ModeHTML)
 }
