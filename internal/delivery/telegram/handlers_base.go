@@ -73,7 +73,7 @@ func (h *BotHandler) HandleBack(c tele.Context) error {
 	slog.Debug("Handling back", "state", ctxUser.State)
 
 	switch ctxUser.State {
-	case StateWaitExpense, StateViewBalance, StateViewSuccessExp:
+	case StateWaitExpense, StateViewHistory, StateViewSuccessExp:
 		h.mu.Lock()
 		ctxUser.State = StateViewFund
 		h.mu.Unlock()

@@ -180,7 +180,7 @@ func (h *BotHandler) HandleLogExpense(c tele.Context) error {
 	return c.Edit(msg, h.BackMenu(), tele.ModeHTML)
 }
 
-func (h *BotHandler) HandleBalance(c tele.Context) error {
+func (h *BotHandler) HandleHistory(c tele.Context) error {
 	defer func(c tele.Context, resp ...*tele.CallbackResponse) {
 		err := c.Respond(resp...)
 		if err != nil {
@@ -190,7 +190,7 @@ func (h *BotHandler) HandleBalance(c tele.Context) error {
 	h.mu.Lock()
 	ctxUser := h.fetchContext(c.Sender().ID)
 	ctxUser.LastMsgID = c.Message().ID
-	ctxUser.State = StateViewBalance
+	ctxUser.State = StateViewHistory
 	h.mu.Unlock()
 	ctx := context.Background()
 	fund := &domain.Fund{

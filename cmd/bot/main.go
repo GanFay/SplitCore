@@ -3,6 +3,7 @@ package main
 import (
 	"SplitCore/internal/delivery/telegram"
 	"SplitCore/internal/repository/postgres"
+	"SplitCore/internal/usecase"
 	"context"
 	"fmt"
 	"log/slog"
@@ -57,13 +58,14 @@ func main() {
 	userRepository := postgres.NewUserRepository(pool)
 	fundRepository := postgres.NewFundRepository(pool)
 	purchaseRepository := postgres.NewPurchaseRepository(pool)
+	fundUC := usecase.NewFundUsecase(fundRepository, userRepository)
 
 	b, err := tele.NewBot(settings)
 	if err != nil {
 		slog.Error("Error creating bot", "err", err)
 		os.Exit(1)
 	}
-	h := telegram.NewBotHandler(userRepository, fundRepository, purchaseRepository)
+	h := telegram.NewBotHandler(userRepository, fundRepository, purchaseRepository, fundUC)
 	h.SetupRegister(b)
 	vBot := os.Getenv("BOT_VER")
 	slog.Info("Starting bot", "version", vBot, "env", "dev")

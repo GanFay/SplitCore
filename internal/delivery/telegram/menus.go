@@ -34,11 +34,13 @@ func (h *BotHandler) BackMenu() *tele.ReplyMarkup {
 func (h *BotHandler) FundViewMenu() *tele.ReplyMarkup {
 	menu := tele.ReplyMarkup{ResizeKeyboard: true}
 	btnLogExp := menu.Data("➕ Log Expense", CommandLogExpense)
-	btnBal := menu.Data("📊 Settle Up", CommandBalance)
+	btnLogs := menu.Data("Logs", CommandLogs)
+	btnBal := menu.Data("📊 Settle Up", CommandSettleUp)
 	btnMembers := menu.Data("Member", CommandMembers)
 	btnBack := menu.Data("Back", CommandBack)
 	menu.Inline(
 		menu.Row(btnLogExp),
+		menu.Row(btnLogs),
 		menu.Row(btnBal),
 		menu.Row(btnMembers),
 		menu.Row(btnBack))
