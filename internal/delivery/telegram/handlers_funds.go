@@ -200,7 +200,7 @@ func (h *BotHandler) HandleBalance(c tele.Context) error {
 	if err != nil {
 		return h.error(c, "Internal Error, failed to get info about this fund", err.Error(), Edit)
 	}
-	purchases, err := h.fundRepo.GetPurchasesByFund(ctx, fund)
+	purchases, err := h.purchaseRepo.GetPurchasesByFund(ctx, fund)
 	if err != nil {
 		return h.error(c, "Internal Error, failed to get purchases", err.Error(), Edit)
 	}

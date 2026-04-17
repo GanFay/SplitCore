@@ -16,7 +16,9 @@ type FundRepository interface {
 	GetByUserID(ctx context.Context, userID int64, limit int, offset int) ([]domain.Fund, error)
 
 	AddMember(ctx context.Context, fund *domain.Fund, userID int64) error
+}
 
+type PurchaseRepository interface {
 	GetPurchasesByFund(ctx context.Context, fund *domain.Fund) ([]domain.Purchase, error)
 	CreatePurchase(ctx context.Context, purchase *domain.Purchase) error
 }

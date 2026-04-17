@@ -56,13 +56,14 @@ func main() {
 
 	userRepository := postgres.NewUserRepository(pool)
 	fundRepository := postgres.NewFundRepository(pool)
+	purchaseRepository := postgres.NewPurchaseRepository(pool)
 
 	b, err := tele.NewBot(settings)
 	if err != nil {
 		slog.Error("Error creating bot", "err", err)
 		os.Exit(1)
 	}
-	h := telegram.NewBotHandler(userRepository, fundRepository)
+	h := telegram.NewBotHandler(userRepository, fundRepository, purchaseRepository)
 	h.SetupRegister(b)
 	vBot := os.Getenv("BOT_VER")
 	slog.Info("Starting bot", "version", vBot, "env", "dev")

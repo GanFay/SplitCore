@@ -7,10 +7,11 @@ import (
 )
 
 type BotHandler struct {
-	userState map[int64]*UserContext
-	userRepo  repository.UserRepository
-	fundRepo  repository.FundRepository
-	mu        sync.RWMutex
+	userState    map[int64]*UserContext
+	userRepo     repository.UserRepository
+	fundRepo     repository.FundRepository
+	purchaseRepo repository.PurchaseRepository
+	mu           sync.RWMutex
 }
 
 type State int
@@ -37,6 +38,7 @@ const (
 	StateViewFund
 	StateWaitExpense
 	StateViewBalance
+	StateViewSuccessExp
 )
 const (
 	CommandCreateFund = "create_fund"
@@ -51,11 +53,12 @@ const (
 	CommandMembers    = "members"
 )
 
-func NewBotHandler(userRepository repository.UserRepository, fundRepository repository.FundRepository) *BotHandler {
+func NewBotHandler(userRepository repository.UserRepository, fundRepository repository.FundRepository, purchaseRepository repository.PurchaseRepository) *BotHandler {
 	slog.Info("Setting up telegram bot")
 	return &BotHandler{
-		userState: make(map[int64]*UserContext),
-		userRepo:  userRepository,
-		fundRepo:  fundRepository,
+		userState:    make(map[int64]*UserContext),
+		userRepo:     userRepository,
+		fundRepo:     fundRepository,
+		purchaseRepo: purchaseRepository,
 	}
 }

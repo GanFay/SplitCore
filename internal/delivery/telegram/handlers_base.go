@@ -67,13 +67,13 @@ func (h *BotHandler) HandleBack(c tele.Context) error {
 			slog.Error("Error while handling back", "err", err.Error())
 		}
 	}(c)
-
 	id := c.Sender().ID
 
 	ctxUser := h.getUserContext(id)
+	slog.Debug("Handling back", "state", ctxUser.State)
 
 	switch ctxUser.State {
-	case StateWaitExpense:
+	case StateWaitExpense, StateViewBalance, StateViewSuccessExp:
 		h.mu.Lock()
 		ctxUser.State = StateViewFund
 		h.mu.Unlock()
@@ -121,18 +121,16 @@ func (h *BotHandler) OnText(c tele.Context) error {
 			Amount:      cost,
 			Description: desc,
 		}
-		err = h.fundRepo.CreatePurchase(ctx, purchase)
+		err = h.purchaseRepo.CreatePurchase(ctx, purchase)
 		if err != nil {
 			return h.error(c, "Internal error, please try again later", err.Error(), Edit)
 		}
 		h.mu.Lock()
-		ctxUser.State = StateViewFund
+		ctxUser.State = StateViewSuccessExp
 		h.mu.Unlock()
 		msg := fmt.Sprintf("✅You successfully added a purchase at your fund\n\nAmount💲: %.2f\nDescription📝: %s", purchase.Amount, purchase.Description)
 		_, err = c.Bot().Edit(storedMsg, msg, h.BackMenu(), tele.ModeHTML)
-		if err != nil {
-			return h.error(c, "Internal error, please try again later", err.Error(), Edit)
-		}
+		return err
 	case StateWaitFundName:
 		InviteCode := utils.GenerateInviteCode(6)
 		botName := os.Getenv("BOT_NAME")
