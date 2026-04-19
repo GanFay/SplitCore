@@ -3,7 +3,6 @@ package postgres
 import (
 	"SplitCore/internal/domain"
 	"context"
-	"fmt"
 	"log/slog"
 
 	"github.com/jackc/pgx/v5"
@@ -103,15 +102,12 @@ func (r *FundRepository) AddMember(ctx context.Context, fund *domain.Fund, userI
 }
 
 func (r *FundRepository) IsMember(ctx context.Context, fundID int, userID int64) (bool, error) {
-	query := `SELECT  FROM fund_members WHERE user_id = $1 AND fund_id = $2`
-	tempUserID := int64(0)
-	tempFundID := 0
-	err := r.DB.QueryRow(ctx, query, userID, fundID).Scan(&tempUserID, &tempFundID)
+	query := `SELECT EXISTS(SELECT 1 FROM fund_members WHERE user_id = $1 AND fund_id = $2)`
+
+	var exists bool
+	err := r.DB.QueryRow(ctx, query, userID, fundID).Scan(&exists)
 	if err != nil {
 		return false, err
 	}
-	if tempUserID != userID && tempFundID != fundID {
-		return false, fmt.Errorf("invalid to get fund member")
-	}
-	return true, nil
+	return exists, nil
 }

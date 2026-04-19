@@ -30,12 +30,13 @@ func (u *FundUsecase) AddExpense(ctx context.Context, ctxInfoAboutPurchase tele.
 		return nil, err
 	}
 	cost, desc, err := utils.ParsePurchase(ctxInfoAboutPurchase.Text())
-	if cost <= 0 {
-		return nil, errors.New("invalid amount")
-	}
 	if err != nil {
 		return nil, err
 	}
+	if cost <= 0 {
+		return nil, errors.New("invalid amount")
+	}
+
 	purchase := &domain.Purchase{
 		FundID:      fundID,
 		PayerID:     ctxInfoAboutPurchase.Sender().ID,

@@ -113,7 +113,7 @@ func (h *BotHandler) OnText(c tele.Context) error {
 		storedMsg := &tele.Message{ID: ctxUser.LastMsgID, Chat: c.Chat()}
 		purchase, err := h.fundUC.AddExpense(ctx, c, ctxUser.ActiveFundID)
 		if err != nil {
-			return h.error(c, "Failed to add expense", err.Error(), Edit)
+			return h.error(c, err.Error(), err.Error(), Edit)
 		}
 		h.mu.Lock()
 		ctxUser.State = StateViewSuccessExp
@@ -195,13 +195,9 @@ func (h *BotHandler) OnText(c tele.Context) error {
 }
 
 func (h *BotHandler) error(c tele.Context, userMsg string, techMsg string, mode SendMode) error {
-	defer func(c tele.Context, resp ...*tele.CallbackResponse) {
-		err := c.Respond(resp...)
-		if err != nil {
-			slog.Error("error to send response", "err", err.Error(), "id", c.Sender().ID)
-			return
-		}
-	}(c)
+	if c.Callback() != nil {
+		_ = c.Respond()
+	}
 
 	slog.Error(userMsg, "err", techMsg, "user_id", c.Sender().ID)
 	storedMsg := &tele.Message{ID: h.userState[c.Sender().ID].LastMsgID, Chat: c.Chat()}
