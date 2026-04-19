@@ -20,7 +20,7 @@ func NewFundRepository(pool *pgxpool.Pool) *FundRepository {
 	return &FundRepository{DB: pool}
 }
 
-func (r *FundRepository) Create(ctx context.Context, fund *domain.Fund) (*domain.Fund, error) {
+func (r *FundRepository) CreateFund(ctx context.Context, fund *domain.Fund) (*domain.Fund, error) {
 	tx, err := r.DB.Begin(ctx)
 	if err != nil {
 		return nil, err

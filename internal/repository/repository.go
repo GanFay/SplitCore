@@ -6,12 +6,12 @@ import (
 )
 
 type UserRepository interface {
-	Create(ctx context.Context, u *domain.User) (*domain.User, error)
-	Get(ctx context.Context, tgID int64) (*domain.User, error)
+	CreateUser(ctx context.Context, u *domain.User) (*domain.User, error)
+	GetUser(ctx context.Context, tgID int64) (*domain.User, error)
 }
 
 type FundRepository interface {
-	Create(ctx context.Context, fund *domain.Fund) (*domain.Fund, error)
+	CreateFund(ctx context.Context, fund *domain.Fund) (*domain.Fund, error)
 	GetInfo(ctx context.Context, reqFund *domain.Fund) (*domain.Fund, error)
 	GetByUserID(ctx context.Context, userID int64, limit int, offset int) ([]domain.Fund, error)
 

@@ -17,7 +17,7 @@ func NewUserRepository(db *pgxpool.Pool) *UserRepository {
 	return &UserRepository{DB: db}
 }
 
-func (r *UserRepository) Create(ctx context.Context, u *domain.User) (*domain.User, error) {
+func (r *UserRepository) CreateUser(ctx context.Context, u *domain.User) (*domain.User, error) {
 	err := r.DB.QueryRow(ctx, `INSERT INTO users (tg_id, username, first_name) 
 	VALUES ($1, $2, $3)
 	ON CONFLICT (tg_id) DO NOTHING 	
@@ -25,7 +25,7 @@ func (r *UserRepository) Create(ctx context.Context, u *domain.User) (*domain.Us
 	return u, err
 }
 
-func (r *UserRepository) Get(ctx context.Context, tgID int64) (*domain.User, error) {
+func (r *UserRepository) GetUser(ctx context.Context, tgID int64) (*domain.User, error) {
 	var u domain.User
 	u.TgID = tgID
 	err := r.DB.QueryRow(ctx, `SELECT username, first_name, created_at FROM users WHERE tg_id = $1`, tgID).Scan(&u.Username, &u.FirstName, &u.CreatedAt)

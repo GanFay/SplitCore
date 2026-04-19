@@ -8,15 +8,7 @@ type Purchase struct {
 	ID          int
 	FundID      int
 	PayerID     int64
-	Amount      float64
-	Description string
-	CreatedAt   time.Time
-}
-
-type PurchaseDetailed struct {
-	ID          int
-	FundID      int
-	PayerID     int64
+	PayerName   string
 	Amount      float64
 	Description string
 	CreatedAt   time.Time

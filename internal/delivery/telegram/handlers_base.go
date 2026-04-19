@@ -26,7 +26,7 @@ func (h *BotHandler) HandleStart(c tele.Context) error {
 	user.Username = c.Sender().Username
 	user.FirstName = c.Sender().FirstName
 
-	_, err := h.userRepo.Create(ctx, &user)
+	_, err := h.userUC.CreateUser(ctx, &user)
 	if err != nil {
 		slog.Warn("could not register user", "err", err, "id", user.TgID)
 	}
@@ -41,12 +41,12 @@ func (h *BotHandler) HandleStart(c tele.Context) error {
 		fund := &domain.Fund{
 			InviteCode: arg,
 		}
-		fund, err = h.fundRepo.GetInfo(ctx, fund)
+		fund, err = h.fundUC.GetInfo(ctx, fund)
 		if err != nil {
 			return h.error(c, "Invite code not found", err.Error(), Reply)
 		}
 
-		err = h.fundRepo.AddMember(ctx, fund, user.TgID)
+		err = h.fundUC.AddMember(ctx, fund, user.TgID)
 		if err != nil {
 			return h.error(c, "Failed to join the fund", err.Error(), Reply)
 		}
@@ -131,7 +131,7 @@ func (h *BotHandler) OnText(c tele.Context) error {
 			InviteCode: InviteCode,
 		}
 		slog.Info("Setting up fund", "fund", fund, "id", id)
-		_, err := h.fundRepo.Create(ctx, &fund)
+		_, err := h.fundUC.CreateFund(ctx, &fund)
 		if err != nil {
 			return h.error(c, "Failed to create fund", err.Error(), Edit)
 		}
@@ -149,12 +149,12 @@ func (h *BotHandler) OnText(c tele.Context) error {
 		fund := &domain.Fund{
 			InviteCode: text,
 		}
-		fund, err := h.fundRepo.GetInfo(ctx, fund)
+		fund, err := h.fundUC.GetInfo(ctx, fund)
 		if err != nil {
 			return h.error(c, "Failed to get fund", err.Error(), Edit)
 		}
 
-		err = h.fundRepo.AddMember(ctx, fund, id)
+		err = h.fundUC.AddMember(ctx, fund, id)
 		if err != nil {
 			if strings.Contains(err.Error(), "SQLSTATE 23505") {
 				storedMsg := &tele.Message{ID: ctxUser.LastMsgID, Chat: c.Chat()}

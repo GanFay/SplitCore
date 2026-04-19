@@ -140,11 +140,11 @@ func (h *BotHandler) HandleFund(c tele.Context) error {
 	}
 	slog.Debug("", "id", fundId)
 
-	fund, err := h.fundRepo.GetInfo(ctx, fund)
+	fund, err := h.fundUC.GetInfo(ctx, fund)
 	if err != nil {
 		return h.error(c, "Internal Error, failed to get info about this fund, try again later", err.Error(), Edit)
 	}
-	author, err := h.userRepo.Get(ctx, fund.AuthorID)
+	author, err := h.userUC.GetUser(ctx, fund.AuthorID)
 	if err != nil {
 		return h.error(c, "Internal Error, try again later", err.Error(), Edit)
 	}
@@ -196,11 +196,11 @@ func (h *BotHandler) HandleHistory(c tele.Context) error {
 	fund := &domain.Fund{
 		ID: ctxUser.ActiveFundID,
 	}
-	fund, err := h.fundRepo.GetInfo(ctx, fund)
+	fund, err := h.fundUC.GetInfo(ctx, fund)
 	if err != nil {
 		return h.error(c, "Internal Error, failed to get info about this fund", err.Error(), Edit)
 	}
-	purchases, err := h.purchaseRepo.GetPurchasesByFund(ctx, fund)
+	purchases, err := h.fundUC.GetPurchasesByFund(ctx, fund)
 	if err != nil {
 		return h.error(c, "Internal Error, failed to get purchases", err.Error(), Edit)
 	}
