@@ -25,3 +25,8 @@ type PurchaseRepository interface {
 	GetPurchasesByFundAll(ctx context.Context, fundID int) ([]domain.Purchase, error)
 	CreatePurchase(ctx context.Context, purchase *domain.Purchase) error
 }
+
+type RedisRepository interface {
+	GetUserCtx(ctx context.Context, userID int64) (*domain.UserContext, error)
+	SaveUserCtx(ctx context.Context, userID int64, value *domain.UserContext) error
+}

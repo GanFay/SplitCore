@@ -25,3 +25,8 @@ type UserUsecase interface {
 	CreateUser(ctx context.Context, u *User) (*User, error)
 	GetUser(ctx context.Context, tgID int64) (*User, error)
 }
+
+type StatesUsecase interface {
+	GetUserCtx(ctx context.Context, userID int64) (*UserContext, error)
+	SaveUserCtx(ctx context.Context, userID int64, value *UserContext) error
+}

@@ -30,11 +30,11 @@ type RedisConfig struct {
 }
 
 func (p PGConfig) URL() string {
-	return fmt.Sprintf("postgres://%s:%s@%s:%s/%s?sslmode=disable", p.User, p.Password, p.Host, p.Port, p.Database)
+	return fmt.Sprintf("postgresql://%s:%s@%s:%s/%s?sslmode=disable", p.User, p.Password, p.Host, p.Port, p.Database)
 }
 
-func (r RedisConfig) URL() string {
-	return fmt.Sprintf("redis://%s:%s", r.Host, r.Port)
+func (r RedisConfig) Addr() string {
+	return fmt.Sprintf("%s:%s", r.Host, r.Port)
 }
 
 func LoadConfig() *Config {

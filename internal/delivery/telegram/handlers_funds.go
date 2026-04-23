@@ -20,18 +20,19 @@ func (h *BotHandler) HandleCreateFund(c tele.Context) error {
 			slog.Error("Failed to respond to create fund message", "err", err)
 		}
 	}(c)
-
-	id := c.Sender().ID
-	h.mu.Lock()
-	ctxUser := h.fetchContext(id)
-	ctxUser.State = StateWaitFundName
-	ctxUser.LastMsgID = c.Message().ID
-	h.mu.Unlock()
+	ctx := context.Background()
+	userCtx, saveCtx, err := h.getUserCtxH(c, ctx)
+	if err != nil {
+		return h.error(c, "Internal error try again later", err.Error(), Edit)
+	}
+	defer saveCtx()
+	userCtx.State = domain.StateWaitFundName
+	userCtx.LastMsgID = c.Message().ID
 	msg := "📝 <b>Create a New Fund</b>\n\n" +
 		"Send me a short name for your new fund.\n" +
 		"💡 <i>Examples: Trip to Paris, BBQ Weekend, Roommates.</i>"
-	storedMsg := &tele.Message{ID: ctxUser.LastMsgID, Chat: c.Chat()}
-	_, err := c.Bot().Edit(storedMsg, msg, h.BackMenu(), tele.ModeHTML)
+	storedMsg := &tele.Message{ID: userCtx.LastMsgID, Chat: c.Chat()}
+	_, err = c.Bot().Edit(storedMsg, msg, h.BackMenu(), tele.ModeHTML)
 	return err
 }
 
@@ -43,17 +44,18 @@ func (h *BotHandler) HandleJoinFund(c tele.Context) error {
 			return
 		}
 	}(c)
-
-	id := c.Sender().ID
-	h.mu.Lock()
-	ctxUser := h.fetchContext(id)
-	ctxUser.State = StateWaitFundJoinCode
-	ctxUser.LastMsgID = c.Message().ID
-	h.mu.Unlock()
+	ctx := context.Background()
+	userCtx, saveCtx, err := h.getUserCtxH(c, ctx)
+	if err != nil {
+		return h.error(c, "Internal error try again later", err.Error(), Edit)
+	}
+	defer saveCtx()
+	userCtx.State = domain.StateWaitFundJoinCode
+	userCtx.LastMsgID = c.Message().ID
 	msg := "🔑 <b>Join a Fund</b>\n\n" +
 		"Please send me the <b>6-character invite code</b> you received from the creator."
-	storedMsg := &tele.Message{ID: ctxUser.LastMsgID, Chat: c.Chat()}
-	_, err := c.Bot().Edit(storedMsg, msg, h.BackMenu(), tele.ModeHTML)
+	storedMsg := &tele.Message{ID: userCtx.LastMsgID, Chat: c.Chat()}
+	_, err = c.Bot().Edit(storedMsg, msg, h.BackMenu(), tele.ModeHTML)
 	return err
 }
 
@@ -65,15 +67,18 @@ func (h *BotHandler) HandleMyFund(c tele.Context) error {
 			return
 		}
 	}(c)
-
+	ctx := context.Background()
 	msg := "Your funds👇"
-	h.mu.Lock()
-	ctxUser := h.fetchContext(c.Sender().ID)
-	ctxUser.State = StateFundMenu
-	ctxUser.LastMsgID = c.Message().ID
-	h.mu.Unlock()
-	storedMsg := &tele.Message{ID: ctxUser.LastMsgID, Chat: c.Chat()}
-	_, err := c.Bot().Edit(storedMsg, msg, h.MyFundMenu(c, 0), tele.ModeHTML)
+	userCtx, saveCtx, err := h.getUserCtxH(c, ctx)
+	if err != nil {
+		return h.error(c, "Internal error try again later", err.Error(), Edit)
+	}
+	defer saveCtx()
+	userCtx.State = domain.StateFundMenu
+	userCtx.LastMsgID = c.Message().ID
+	storedMsg := &tele.Message{ID: userCtx.LastMsgID, Chat: c.Chat()}
+	_, err = c.Bot().Edit(storedMsg, msg, h.MyFundMenu(c, 0), tele.ModeHTML)
+	slog.Error("Failed to send me fund message", "err", err)
 	return err
 }
 
@@ -85,16 +90,15 @@ func (h *BotHandler) HandleNextPreviousMF(c tele.Context) error {
 			return
 		}
 	}(c)
-
+	ctx := context.Background()
 	offset, err := strconv.Atoi(c.Data())
-	h.mu.Lock()
-	ctxUser := h.fetchContext(c.Sender().ID)
-	ctxUser.LastMsgID = c.Message().ID
-	h.mu.Unlock()
+	userCtx, saveCtx, err := h.getUserCtxH(c, ctx)
 	if err != nil {
-		return h.error(c, "Internal Error, try again later", err.Error(), Edit)
+		return h.error(c, "Internal error try again later", err.Error(), Edit)
 	}
-	storedMsg := &tele.Message{ID: ctxUser.LastMsgID, Chat: c.Chat()}
+	defer saveCtx()
+	userCtx.LastMsgID = c.Message().ID
+	storedMsg := &tele.Message{ID: userCtx.LastMsgID, Chat: c.Chat()}
 	_, err = c.Bot().Edit(storedMsg, h.MyFundMenu(c, offset), tele.ModeHTML)
 	return err
 }
@@ -106,14 +110,17 @@ func (h *BotHandler) HandleViewFund(c tele.Context) error {
 			slog.Error("Failed to respond to callback", "err", err)
 		}
 	}(c)
+	ctx := context.Background()
 	fundId, err := strconv.Atoi(c.Data())
 	if err != nil {
 		return h.error(c, "Internal Error, try again later", err.Error(), Edit)
 	}
-	h.mu.Lock()
-	ctxUser := h.fetchContext(c.Sender().ID)
-	ctxUser.ActiveFundID = fundId
-	h.mu.Unlock()
+	userCtx, saveCtx, err := h.getUserCtxH(c, ctx)
+	if err != nil {
+		return h.error(c, "Internal error try again later", err.Error(), Edit)
+	}
+	defer saveCtx()
+	userCtx.ActiveFundID = fundId
 	err = h.HandleFund(c)
 	if err != nil {
 		err = h.error(c, "Internal Error, try again later", err.Error(), Edit)
@@ -130,20 +137,22 @@ func (h *BotHandler) HandleFund(c tele.Context) error {
 			return
 		}
 	}(c)
-	h.mu.Lock()
-	ctxUser := h.fetchContext(c.Sender().ID)
-	ctxUser.LastMsgID = c.Message().ID
-	ctxUser.State = StateViewFund
-	h.mu.Unlock()
 	ctx := context.Background()
+	userCtx, saveCtx, err := h.getUserCtxH(c, ctx)
+	if err != nil {
+		return h.error(c, "Internal error try again later", err.Error(), Edit)
+	}
+	defer saveCtx()
+	userCtx.LastMsgID = c.Message().ID
+	userCtx.State = domain.StateViewFund
 
-	fundId := ctxUser.ActiveFundID
+	fundId := userCtx.ActiveFundID
 	fund := &domain.Fund{
 		ID: fundId,
 	}
 	slog.Debug("", "id", fundId)
 
-	fund, err := h.fundUC.GetInfo(ctx, fund)
+	fund, err = h.fundUC.GetInfo(ctx, fund)
 	if err != nil {
 		return h.error(c, "Internal Error, failed to get info about this fund, try again later", err.Error(), Edit)
 	}
@@ -164,7 +173,7 @@ func (h *BotHandler) HandleFund(c tele.Context) error {
 			"👇 <i>What would you like to do?</i>",
 		fund.Name, author.Username, fund.CreatedAt.In(location).Format(`02.01.2006 15:04`), fund.InviteCode,
 	)
-	storedMsg := &tele.Message{ID: ctxUser.LastMsgID, Chat: c.Chat()}
+	storedMsg := &tele.Message{ID: userCtx.LastMsgID, Chat: c.Chat()}
 	_, err = c.Bot().Edit(storedMsg, msg, h.FundViewMenu(), tele.ModeHTML)
 	return err
 }
@@ -176,12 +185,14 @@ func (h *BotHandler) HandleLogExpense(c tele.Context) error {
 			slog.Error("Failed to respond to log-expense message", "err", err)
 		}
 	}(c)
-
-	h.mu.Lock()
-	ctxUser := h.fetchContext(c.Sender().ID)
-	ctxUser.LastMsgID = c.Message().ID
-	ctxUser.State = StateWaitExpense
-	h.mu.Unlock()
+	ctx := context.Background()
+	userCtx, saveCtx, err := h.getUserCtxH(c, ctx)
+	if err != nil {
+		return h.error(c, "Internal error try again later", err.Error(), Edit)
+	}
+	defer saveCtx()
+	userCtx.LastMsgID = c.Message().ID
+	userCtx.State = domain.StateWaitExpense
 	msg := fmt.Sprintf(
 		"💸 <b>Log an Expense</b>\n\n" +
 			"Send me the amount and a short description.\n\n" +
@@ -199,11 +210,14 @@ func (h *BotHandler) HandleHistory(c tele.Context) error {
 		}
 	}(c)
 	var sb strings.Builder
-	h.mu.Lock()
-	ctxUser := h.fetchContext(c.Sender().ID)
-	ctxUser.LastMsgID = c.Message().ID
-	ctxUser.State = StateViewHistory
-	h.mu.Unlock()
+	ctx := context.Background()
+	userCtx, saveCtx, err := h.getUserCtxH(c, ctx)
+	if err != nil {
+		return h.error(c, "Internal error try again later", err.Error(), Edit)
+	}
+	defer saveCtx()
+	userCtx.LastMsgID = c.Message().ID
+	userCtx.State = domain.StateViewHistory
 	offset, err := strconv.Atoi(c.Data())
 	if err != nil {
 		return h.error(c, "Internal Error, try again later", err.Error(), Edit)
@@ -211,9 +225,8 @@ func (h *BotHandler) HandleHistory(c tele.Context) error {
 	if offset < 0 {
 		return h.error(c, "Internal Error, try again later", fmt.Sprintf("offset < 0"), Edit)
 	}
-	ctx := context.Background()
 	fund := &domain.Fund{
-		ID: ctxUser.ActiveFundID,
+		ID: userCtx.ActiveFundID,
 	}
 	fund, err = h.fundUC.GetInfo(ctx, fund)
 	if err != nil {
@@ -235,28 +248,31 @@ func (h *BotHandler) HandleHistory(c tele.Context) error {
 		}
 	}
 
-	storedMsg := &tele.Message{ID: ctxUser.LastMsgID, Chat: c.Chat()}
+	storedMsg := &tele.Message{ID: userCtx.LastMsgID, Chat: c.Chat()}
 	_, err = c.Bot().Edit(storedMsg, sb.String(), h.MenuViewFundLogs(offset, purchases), tele.ModeHTML)
 	return err
 }
 
 func (h *BotHandler) HandleSettleUp(c tele.Context) error {
-	h.mu.Lock()
-	ctxUser := h.fetchContext(c.Sender().ID)
-	ctxUser.LastMsgID = c.Message().ID
-	ctxUser.State = StateViewSettleUp
-	h.mu.Unlock()
-	err := c.Respond()
+	ctx := context.Background()
+
+	userCtx, saveCtx, err := h.getUserCtxH(c, ctx)
+	if err != nil {
+		return h.error(c, "Internal error try again later", err.Error(), Edit)
+	}
+	defer saveCtx()
+	userCtx.LastMsgID = c.Message().ID
+	userCtx.State = domain.StateViewSettleUp
+	err = c.Respond()
 	if err != nil {
 		return h.error(c, "Internal Error, try again later", err.Error(), Edit)
 	}
-	ctx := context.Background()
-	balance, err := h.fundUC.GetBalance(ctx, ctxUser.ActiveFundID)
+	balance, err := h.fundUC.GetBalance(ctx, userCtx.ActiveFundID)
 	if err != nil {
 		return err
 	}
 	fund := &domain.Fund{
-		ID: ctxUser.ActiveFundID,
+		ID: userCtx.ActiveFundID,
 	}
 	fund, err = h.fundUC.GetInfo(ctx, fund)
 	if err != nil {
@@ -265,7 +281,7 @@ func (h *BotHandler) HandleSettleUp(c tele.Context) error {
 	msg := fmt.Sprintf("⚖️ <b>Settlement for «%s»</b>\n\n", fund.Name)
 	msg += fmt.Sprintf("💵 <b>Total Spent:</b> %.2f\n", balance.TotalAmount)
 	msg += fmt.Sprintf("🎯 <b>Average per person:</b> %.2f\n\n", balance.Average)
-	members, err := h.fundUC.GetMembers(ctx, ctxUser.ActiveFundID)
+	members, err := h.fundUC.GetMembers(ctx, userCtx.ActiveFundID)
 	if err != nil {
 		return err
 	}
@@ -286,12 +302,15 @@ func (h *BotHandler) HandleSettleUp(c tele.Context) error {
 }
 
 func (h *BotHandler) HandleMembers(c tele.Context) error {
-	h.mu.Lock()
-	ctxUser := h.fetchContext(c.Sender().ID)
-	ctxUser.LastMsgID = c.Message().ID
-	ctxUser.State = StateViewMembers
-	h.mu.Unlock()
-	members, err := h.fundUC.GetMembers(context.Background(), ctxUser.ActiveFundID)
+	ctx := context.Background()
+	userCtx, saveCtx, err := h.getUserCtxH(c, ctx)
+	if err != nil {
+		return h.error(c, "Internal error try again later", err.Error(), Edit)
+	}
+	defer saveCtx()
+	userCtx.LastMsgID = c.Message().ID
+	userCtx.State = domain.StateViewMembers
+	members, err := h.fundUC.GetMembers(context.Background(), userCtx.ActiveFundID)
 	if err != nil {
 		return h.error(c, "Could not load members list", err.Error(), Edit)
 	}
@@ -304,4 +323,22 @@ func (h *BotHandler) HandleMembers(c tele.Context) error {
 	}
 
 	return c.Edit(msg, h.BackMenu(), tele.ModeHTML)
+}
+
+func (h *BotHandler) getUserCtxH(c tele.Context, ctx context.Context) (*domain.UserContext, func(), error) {
+	id := c.Sender().ID
+
+	userCtx, err := h.statesUC.GetUserCtx(ctx, id)
+	if err != nil {
+		_ = h.error(c, "Internal error try again later", err.Error(), Edit)
+		return nil, nil, err
+	}
+
+	saveFunc := func() {
+		if saveErr := h.statesUC.SaveUserCtx(ctx, id, userCtx); saveErr != nil {
+			slog.Error("Failed to save user context", "err", saveErr)
+		}
+	}
+
+	return userCtx, saveFunc, nil
 }

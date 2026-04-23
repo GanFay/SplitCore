@@ -107,6 +107,11 @@ func (h *BotHandler) MyFundMenu(c tele.Context, offset int) *tele.ReplyMarkup {
 	rows = append(rows, menu.Row(menu.Data("🔙🔙Back", CommandBack)))
 
 	menu.Inline(rows...)
-	h.userCtx[c.Sender().ID].LastMsgID = c.Message().ID
+	userCtx, saveCtx, err := h.getUserCtxH(c, ctx)
+	if err != nil {
+		_ = h.error(c, "Failed to get user context", err.Error(), Edit)
+	}
+	defer saveCtx()
+	userCtx.LastMsgID = c.Message().ID
 	return &menu
 }
