@@ -4,16 +4,23 @@ import (
 	"io"
 	"log/slog"
 	"os"
+
+	"gopkg.in/natefinch/lumberjack.v2"
 )
 
 func SetupLogger(env string) *slog.Logger {
-	_ = os.MkdirAll("output", 0755)
-	file, err := os.OpenFile("out/app.log", os.O_CREATE|os.O_WRONLY|os.O_APPEND, 0666)
+	err := os.MkdirAll("out", 0755)
 	if err != nil {
-		panic("Failed to open log file: " + err.Error())
+		panic("Failed to create/open log dir: " + err.Error())
 	}
-
-	multiWriter := io.MultiWriter(file, os.Stdout)
+	lumberjackLogger := &lumberjack.Logger{
+		Filename:   "out/app.log",
+		MaxSize:    10,
+		MaxBackups: 5,
+		MaxAge:     30,
+		Compress:   true,
+	}
+	multiWriter := io.MultiWriter(lumberjackLogger, os.Stdout)
 
 	var handler slog.Handler
 	if env == "local" || env == "dev" || env == "development" {

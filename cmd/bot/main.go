@@ -4,6 +4,8 @@ import (
 	"context"
 	"log/slog"
 	"os"
+	"os/signal"
+	"syscall"
 	"time"
 
 	"github.com/ganfay/split-core/internal/config"
@@ -58,6 +60,23 @@ func main() {
 	}
 	h.SetupRegister(b)
 
-	slog.Info("Starting bot", "version", cfg.BotVersion, "env", "dev")
-	b.Start()
+	go func() {
+		slog.Info("Starting bot", "version", cfg.BotVersion, "env", cfg.Env)
+		b.Start()
+	}()
+
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+
+	sign := <-quit
+	slog.Info("Stopping application...", "signal", sign.String())
+
+	b.Stop()
+
+	pool.Close()
+	err = rdb.Close()
+	if err != nil {
+		panic("Failed to close the redis database: " + err.Error())
+	}
+	slog.Info("Application stopped gracefully.")
 }

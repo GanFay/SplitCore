@@ -49,3 +49,16 @@ migrate-action:
 		-source file:///migrations \
 		-database $(DB_URL) \
 		"$(action)"
+
+logs:
+	@if [ -z "$(name)" ]; then \
+  		echo "Missing <name> parameter. Example: make logs name=split_core_app"; \
+  		exit 1; \
+  	fi; \
+	docker logs --tail=100 $(name)
+
+lint:
+	golangci-lint run ${PROJECT_ROOT}
+
+build:
+	go build -o ./bin/bot ./cmd/bot/main.go
