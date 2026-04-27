@@ -1,8 +1,9 @@
 package telegram
 
 import (
-	"SplitCore/internal/domain"
 	"log/slog"
+
+	"github.com/ganfay/split-core/internal/domain"
 )
 
 type BotHandler struct {

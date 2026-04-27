@@ -1,8 +1,9 @@
 package repository
 
 import (
-	"SplitCore/internal/domain"
 	"context"
+
+	"github.com/ganfay/split-core/internal/domain"
 )
 
 type UserRepository interface {

@@ -1,9 +1,10 @@
 package usecase
 
 import (
-	"SplitCore/internal/domain"
-	"SplitCore/internal/repository"
 	"context"
+
+	"github.com/ganfay/split-core/internal/domain"
+	"github.com/ganfay/split-core/internal/repository"
 )
 
 type StatesUsecase struct {

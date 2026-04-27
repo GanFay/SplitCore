@@ -1,9 +1,10 @@
 package postgres
 
 import (
-	"SplitCore/internal/domain"
 	"context"
 	"log/slog"
+
+	"github.com/ganfay/split-core/internal/domain"
 
 	"github.com/jackc/pgx/v5"
 	"github.com/jackc/pgx/v5/pgxpool"

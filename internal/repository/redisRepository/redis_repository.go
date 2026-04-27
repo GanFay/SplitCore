@@ -1,11 +1,12 @@
 package redisRepository
 
 import (
-	"SplitCore/internal/domain"
-	"SplitCore/internal/pkg/utils"
 	"context"
 	"fmt"
 	"time"
+
+	"github.com/ganfay/split-core/internal/domain"
+	"github.com/ganfay/split-core/internal/pkg/utils"
 
 	"github.com/redis/go-redis/v9"
 )

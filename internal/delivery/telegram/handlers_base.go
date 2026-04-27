@@ -1,13 +1,14 @@
 package telegram
 
 import (
-	"SplitCore/internal/domain"
-	"SplitCore/internal/pkg/utils"
 	"context"
 	"fmt"
 	"log/slog"
 	"os"
 	"strings"
+
+	"github.com/ganfay/split-core/internal/domain"
+	"github.com/ganfay/split-core/internal/pkg/utils"
 
 	tele "gopkg.in/telebot.v4"
 )

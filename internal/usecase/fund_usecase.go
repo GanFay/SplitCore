@@ -1,14 +1,15 @@
 package usecase
 
 import (
-	"SplitCore/internal/domain"
-	"SplitCore/internal/pkg/utils"
-	"SplitCore/internal/repository"
 	"context"
 	"errors"
 	"log/slog"
 	"math"
 	time "time"
+
+	"github.com/ganfay/split-core/internal/domain"
+	"github.com/ganfay/split-core/internal/pkg/utils"
+	"github.com/ganfay/split-core/internal/repository"
 
 	tele "gopkg.in/telebot.v4"
 )

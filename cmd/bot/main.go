@@ -1,15 +1,16 @@
 package main
 
 import (
-	"SplitCore/internal/config"
-	"SplitCore/internal/delivery/telegram"
-	"SplitCore/internal/repository/postgres"
-	"SplitCore/internal/repository/redisRepository"
-	"SplitCore/internal/usecase"
 	"context"
 	"log/slog"
 	"os"
 	"time"
+
+	"github.com/ganfay/split-core/internal/config"
+	"github.com/ganfay/split-core/internal/delivery/telegram"
+	"github.com/ganfay/split-core/internal/repository/postgres"
+	"github.com/ganfay/split-core/internal/repository/redisRepository"
+	"github.com/ganfay/split-core/internal/usecase"
 
 	"github.com/redis/go-redis/v9"
 
