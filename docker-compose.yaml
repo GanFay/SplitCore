@@ -26,12 +26,19 @@ services:
     depends_on:
       db:
         condition: service_healthy
+      migrate:
+        condition: service_completed_successfully
     environment:
+      TOKEN: ${TOKEN}
+      BOT_NAME: ${BOT_NAME}
+      BOT_VER: ${BOT_VER}
+      PG_USER: ${PG_USER}
+      PG_PASS: ${PG_PASS}
+      PG_DB: ${PG_DB}
       REDIS_HOST: redis
       PG_HOST: db
       PG_PORT: 5432
       REDIS_PORT: 6379
-
   migrate:
     image: migrate/migrate:v4.19.1
     user: "${UID}:${GID}"
@@ -48,7 +55,6 @@ services:
       - redisdata:/data
     environment:
       REDIS_PASSWORD: ${REDIS_PASS}
-
     command: >
       redis-server
       --requirepass ${REDIS_PASS}
