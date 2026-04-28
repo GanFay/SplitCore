@@ -36,22 +36,28 @@ The project is built with a strict separation of concerns, ensuring high testabi
 - [x] Fund creation and unique Deep-Link generation.
 - [x] Expense logging and history tracking.
 - [x] Advanced debt calculation algorithm (Settle Up).
+- [x] Move FSM states from in-memory to Redis for persistence and horizontal scaling.
+- [x] Graceful shutdown implementation.
 
 **Phase 2: Enhancements (Future) 🚀**
-- [ ] Move FSM states from in-memory to Redis for persistence and horizontal scaling.
+
 - [ ] Add unit tests for the settlement math module.
-- [ ] Graceful shutdown implementation.
+- [ ] CI/CD
+- [ ] Deploy
+- [ ] New features (multivalutes, virtual users)
 
 ## 🚀 Getting Started (Dev)
+
+### Required Docker, docker compose.
 
 1. Clone the repository:
    ```bash
    git clone https://github.com/GanFay/SplitCore.git
    ```
 2. Set up environment variables in a `.env` file (Bot token, DB credentials).
-3. Start the database and application using Docker:
+3. Start the database and application using Makefile:
    ```bash
-   docker-compose up --build -d
+   make services-run
    ```
 4. Run migrations (if executing locally):
    ```bash
