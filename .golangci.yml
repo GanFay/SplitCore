@@ -6,7 +6,6 @@ linters:
     - govet
     - ineffassign
     - staticcheck
-    - typecheck
     - unused
 
 run:
