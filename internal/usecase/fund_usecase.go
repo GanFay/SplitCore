@@ -9,8 +9,6 @@ import (
 	"github.com/ganfay/split-core/internal/domain"
 	"github.com/ganfay/split-core/internal/pkg/utils"
 	"github.com/ganfay/split-core/internal/repository"
-
-	tele "gopkg.in/telebot.v4"
 )
 
 type FundUsecase struct {
@@ -92,12 +90,12 @@ func calculateSettlements(purchases []domain.Purchase, members []domain.User) *d
 	return settlement
 }
 
-func (u *FundUsecase) AddExpense(ctx context.Context, ctxInfoAboutPurchase tele.Context, fundID int) (*domain.Purchase, error) {
-	isMember, err := u.fundRepository.IsMember(ctx, fundID, ctxInfoAboutPurchase.Sender().ID)
+func (u *FundUsecase) AddExpense(ctx context.Context, fundID int, id int64, text string) (*domain.Purchase, error) {
+	isMember, err := u.fundRepository.IsMember(ctx, fundID, id)
 	if err != nil || !isMember {
 		return nil, err
 	}
-	cost, desc, err := utils.ParsePurchase(ctxInfoAboutPurchase.Text())
+	cost, desc, err := utils.ParsePurchase(text)
 	if err != nil {
 		return nil, err
 	}
@@ -108,7 +106,7 @@ func (u *FundUsecase) AddExpense(ctx context.Context, ctxInfoAboutPurchase tele.
 		desc = desc[:197] + "..."
 	}
 	user := domain.User{
-		TgID: ctxInfoAboutPurchase.Sender().ID,
+		ID: id,
 	}
 	purchase := &domain.Purchase{
 		FundID:      fundID,

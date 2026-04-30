@@ -2,13 +2,11 @@ package domain
 
 import (
 	"context"
-
-	tele "gopkg.in/telebot.v4"
 )
 
 type FundUsecase interface {
 	GetBalance(ctx context.Context, fundID int) (*Settlement, error)
-	AddExpense(ctx context.Context, c tele.Context, fundID int) (*Purchase, error)
+	AddExpense(ctx context.Context, fundID int, id int64, text string) (*Purchase, error)
 
 	CreateFund(ctx context.Context, fund *Fund) (*Fund, error)
 	GetInfo(ctx context.Context, reqFund *Fund) (*Fund, error)
@@ -22,8 +20,9 @@ type FundUsecase interface {
 }
 
 type UserUsecase interface {
-	CreateUser(ctx context.Context, u *User) (*User, error)
-	GetUser(ctx context.Context, tgID int64) (*User, error)
+	CreateRealUser(ctx context.Context, tgID int64, username string, firstName string) (int64, error)
+	GetUser(ctx context.Context, id int64) (*User, error)
+	CreateVirtualUser(ctx context.Context, firstName string) (int64, error)
 }
 
 type StatesUsecase interface {

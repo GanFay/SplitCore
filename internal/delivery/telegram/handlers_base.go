@@ -135,7 +135,7 @@ func (h *BotHandler) OnText(c tele.Context) error {
 	switch userCtx.State {
 	case domain.StateWaitExpense:
 		storedMsg := &tele.Message{ID: userCtx.LastMsgID, Chat: c.Chat()}
-		purchase, err := h.fundUC.AddExpense(ctx, c, userCtx.ActiveFundID)
+		purchase, err := h.fundUC.AddExpense(ctx, userCtx.ActiveFundID)
 		if err != nil {
 			return h.error(c, err.Error(), err.Error(), Edit)
 		}
