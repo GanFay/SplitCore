@@ -20,23 +20,42 @@ func NewUserRepository(db *pgxpool.Pool) *UserRepository {
 	return &UserRepository{DB: db}
 }
 
-func (r *UserRepository) CreateUser(ctx context.Context, u *domain.User) (*domain.User, error) {
-	err := r.DB.QueryRow(ctx, `INSERT INTO app.users (tg_id, username, first_name) 
-	VALUES ($1, $2, $3)
-	ON CONFLICT (tg_id) DO NOTHING 	
-	RETURNING created_at`, u.TgID, u.Username, u.FirstName).Scan(&u.CreatedAt)
+func (r *UserRepository) CreateRealUser(ctx context.Context, tgID int64, username, firstName string) (int64, error) {
+	var id int64
+	query := `
+	INSERT INTO app.users (tg_id, username, first_name, is_virtual) 
+	VALUES ($1, $2, $3, false)
+	ON CONFLICT (tg_id) DO UPDATE 
+		SET username = EXCLUDED.username, first_name = EXCLUDED.first_name
+	RETURNING id`
+	err := r.DB.QueryRow(ctx, query, tgID, username, firstName).Scan(&id)
 	if errors.Is(err, pgx.ErrNoRows) {
-		return u, nil
+		return id, nil
 	} else if err != nil {
-		return nil, err
+		return id, err
 	}
-	return u, nil
+	return id, nil
 }
 
-func (r *UserRepository) GetUser(ctx context.Context, tgID int64) (*domain.User, error) {
+func (r *UserRepository) CreateVirtualUser(ctx context.Context, firstName string) (int64, error) {
+	var id int64
+	query := `
+	INSERT INTO app.users (first_name, is_virtual) 
+	VALUES ($1, true)
+	RETURNING id`
+	err := r.DB.QueryRow(ctx, query, firstName).Scan(&id)
+	if errors.Is(err, pgx.ErrNoRows) {
+		return id, nil
+	} else if err != nil {
+		return id, err
+	}
+	return id, nil
+}
+
+func (r *UserRepository) GetUser(ctx context.Context, id int64) (*domain.User, error) {
 	var u domain.User
-	u.TgID = tgID
-	err := r.DB.QueryRow(ctx, `SELECT username, first_name, created_at FROM app.users WHERE tg_id = $1`, tgID).Scan(&u.Username, &u.FirstName, &u.CreatedAt)
+	u.ID = id
+	err := r.DB.QueryRow(ctx, `SELECT tg_id, username, first_name, created_at, is_virtual FROM app.users WHERE id = $1`, u.ID).Scan(&u.TgID, &u.Username, &u.FirstName, &u.CreatedAt, &u.IsVirtual)
 	if err != nil {
 		return nil, err
 	}

@@ -7,8 +7,9 @@ import (
 )
 
 type UserRepository interface {
-	CreateUser(ctx context.Context, u *domain.User) (*domain.User, error)
-	GetUser(ctx context.Context, tgID int64) (*domain.User, error)
+	CreateRealUser(ctx context.Context, tgID int64, username, firstName string) (int64, error)
+	GetUser(ctx context.Context, id int64) (*domain.User, error)
+	CreateVirtualUser(ctx context.Context, firstName string) (int64, error)
 }
 
 type FundRepository interface {

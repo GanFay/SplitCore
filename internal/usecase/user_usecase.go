@@ -16,7 +16,7 @@ func NewUserUsecase(repo repository.UserRepository) domain.UserUsecase {
 }
 
 func (u *userUsecase) CreateUser(ctx context.Context, user *domain.User) (*domain.User, error) {
-	return u.repo.CreateUser(ctx, user)
+	return u.repo.CreateRealUser(ctx, user)
 }
 
 func (u *userUsecase) GetUser(ctx context.Context, tgID int64) (*domain.User, error) {
