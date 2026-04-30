@@ -5,7 +5,6 @@ import (
 	"errors"
 	"log/slog"
 	"math"
-	time "time"
 
 	"github.com/ganfay/split-core/internal/domain"
 	"github.com/ganfay/split-core/internal/pkg/utils"
@@ -24,23 +23,29 @@ func NewFundUsecase(fr repository.FundRepository, pr repository.PurchaseReposito
 }
 
 func (u *FundUsecase) GetBalance(ctx context.Context, fundID int) (*domain.Settlement, error) {
-	start := time.Now()
-	slog.Debug("request", "fundID", fundID, "maxint", math.MaxInt, "start", start, "ctx", ctx)
+	slog.Debug("request", "fundID", fundID, "maxint", math.MaxInt, "ctx", ctx)
 	purchases, err := u.purchaseRepository.GetPurchasesByFundAll(ctx, fundID)
 	if err != nil {
 		slog.Debug("GetBalance", "purchases", purchases, "error", err)
 		return nil, err
 	}
+	members, err := u.fundRepository.GetMembers(ctx, fundID)
+	if err != nil {
+		return nil, err
+	}
+
+	settlement := calculateSettlements(purchases, members)
+	return settlement, nil
+}
+
+func calculateSettlements(purchases []domain.Purchase, members []domain.User) *domain.Settlement {
 	totalAmount := 0.0
 	m := make(map[int64]float64)
 	for _, purchase := range purchases {
 		totalAmount += purchase.Amount
 		m[purchase.Payer.TgID] += purchase.Amount
 	}
-	members, err := u.fundRepository.GetMembers(ctx, fundID)
-	if err != nil {
-		return nil, err
-	}
+
 	averageAmount := totalAmount / float64(len(members))
 	var creditors []int64
 	var debtors []int64
@@ -61,14 +66,14 @@ func (u *FundUsecase) GetBalance(ctx context.Context, fundID int) (*domain.Settl
 		c := creditors[0]
 
 		amount := min(math.Abs(m[d]), m[c])
-
+		roundedAmount := math.Round(amount*100) / 100
 		m[d] += amount
 		m[c] -= amount
 
 		debt := domain.Debt{
 			FromID: d,
 			ToID:   c,
-			Amount: amount,
+			Amount: roundedAmount,
 		}
 		debts = append(debts, debt)
 
@@ -84,9 +89,7 @@ func (u *FundUsecase) GetBalance(ctx context.Context, fundID int) (*domain.Settl
 		Debts:       debts,
 		Average:     averageAmount,
 	}
-	duration := time.Since(start)
-	slog.Debug("settlements", "debts", debts, "totalAmount", totalAmount, "duration", duration, "startedAt", start, "err", err, "creditors", creditors, "purchases", purchases)
-	return settlement, nil
+	return settlement
 }
 
 func (u *FundUsecase) AddExpense(ctx context.Context, ctxInfoAboutPurchase tele.Context, fundID int) (*domain.Purchase, error) {
