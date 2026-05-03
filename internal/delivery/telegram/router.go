@@ -20,6 +20,8 @@ func (h *BotHandler) SetupRegister(b *tele.Bot) {
 	b.Handle("\f"+CommandLogs, h.HandleHistory)
 	b.Handle("\f"+CommandSettleUp, h.HandleSettleUp)
 	b.Handle("\f"+CommandMembers, h.HandleMembers)
+	b.Handle("\f"+CommandAddUser, h.HandleWaitAddUser)
+	//b.Handle("\f"+CommandRemoveUser, h.HandleRemoveUser)
 	b.Handle("\f"+CommandNextVFL, h.HandleHistory)
 	b.Handle("\f"+CommandPreviousVFL, h.HandleHistory)
 	b.Handle(tele.OnText, h.OnText)

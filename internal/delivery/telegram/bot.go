@@ -43,4 +43,6 @@ const (
 	CommandMembers     = "members"
 	CommandPreviousVFL = "previous_vfl"
 	CommandNextVFL     = "settle_up_vfl"
+	CommandAddUser     = "add_user"
+	CommandRemoveUser  = "remove_user"
 )

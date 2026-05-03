@@ -322,7 +322,7 @@ func (h *BotHandler) HandleMembers(c tele.Context) error {
 		msg += fmt.Sprintf("%d. %s\n", i+1, name)
 	}
 
-	return c.Edit(msg, h.BackMenu(), tele.ModeHTML)
+	return c.Edit(msg, h.MenuMembersView(), tele.ModeHTML)
 }
 
 func (h *BotHandler) getUserCtxH(c tele.Context, ctx context.Context) (*domain.UserContext, func(), error) {
@@ -350,3 +350,29 @@ func (h *BotHandler) getUserCtxH(c tele.Context, ctx context.Context) (*domain.U
 
 	return userCtx, saveFunc, nil
 }
+
+func (h *BotHandler) HandleWaitAddUser(c tele.Context) error {
+	ctx := context.Background()
+	userCtx, saveFunc, err := h.getUserCtxH(c, ctx)
+	if err != nil {
+		return h.error(c, "Internal error try again later", err.Error(), Edit)
+	}
+	defer saveFunc()
+	userCtx.LastMsgID = c.Message().ID
+	userCtx.State = domain.StateWaitUsername
+	msg := "<b>Enter the name of the new fund participant</b> ✍️\n\n<i>It will be added as a virtual user (not linked to Telegram).</i>"
+
+	return c.Edit(msg, h.BackMenu(), tele.ModeHTML)
+}
+
+//func (h *BotHandler) HandleRemoveUser(c tele.Context) error  {
+//	ctx := context.Background()
+//	userCtx, saveFunc, err := h.getUserCtxH(c, ctx)
+//	if err != nil {
+//		return h.error(c, "Internal error try again later", err.Error(), Edit)
+//	}
+//	defer saveFunc()
+//	userCtx.LastMsgID = c.Message().ID
+//	userCtx.State = domain.StateWaitUsername
+//	msg :=
+//}

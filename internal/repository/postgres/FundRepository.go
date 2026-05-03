@@ -96,9 +96,9 @@ func (r *FundRepository) GetByUserID(ctx context.Context, userID int64, limit in
 	return funds, nil
 }
 
-func (r *FundRepository) AddMember(ctx context.Context, fund *domain.Fund, userID int64) error {
+func (r *FundRepository) AddMember(ctx context.Context, fundID int, userID int64) error {
 	queryMember := `INSERT INTO app.fund_members (fund_id, user_id) VALUES ($1, $2)`
-	_, err := r.DB.Exec(ctx, queryMember, fund.ID, userID)
+	_, err := r.DB.Exec(ctx, queryMember, fundID, userID)
 	return err
 }
 

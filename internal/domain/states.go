@@ -20,4 +20,6 @@ const (
 	StateViewSuccessExp
 	StateViewSettleUp
 	StateViewMembers
+	StateWaitUsername
+	StateSuccessAVU
 )

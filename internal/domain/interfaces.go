@@ -11,7 +11,7 @@ type FundUsecase interface {
 	CreateFund(ctx context.Context, fund *Fund) (*Fund, error)
 	GetInfo(ctx context.Context, reqFund *Fund) (*Fund, error)
 	GetByUserID(ctx context.Context, IID int64, limit int, offset int) ([]Fund, error)
-	AddMember(ctx context.Context, fund *Fund, IID int64) error
+	AddMember(ctx context.Context, fundID int, IID int64) error
 	IsMember(ctx context.Context, fundID int, IID int64) (bool, error)
 	GetMembers(ctx context.Context, fundID int) ([]User, error)
 

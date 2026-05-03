@@ -33,6 +33,19 @@ func (h *BotHandler) BackMenu() *tele.ReplyMarkup {
 	return &menu
 }
 
+func (h *BotHandler) MenuMembersView() *tele.ReplyMarkup {
+	menu := tele.ReplyMarkup{ResizeKeyboard: true}
+	btnBack := menu.Data("🔙🔙Back", CommandBack)
+	btnAddVirtualUser := menu.Data("➕Add Virtual User", CommandAddUser)
+	btnDeleteVirtualUser := menu.Data("➖Delete Virtual User", CommandRemoveUser)
+	menu.Inline(
+		menu.Row(btnAddVirtualUser),
+		menu.Row(btnDeleteVirtualUser),
+		menu.Row(btnBack),
+	)
+	return &menu
+}
+
 func (h *BotHandler) MenuViewFundLogs(offset int, p []domain.Purchase) *tele.ReplyMarkup {
 	menu := tele.ReplyMarkup{ResizeKeyboard: true}
 	limit := 7

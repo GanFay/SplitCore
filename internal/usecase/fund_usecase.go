@@ -120,12 +120,8 @@ func (u *FundUsecase) GetByUserID(ctx context.Context, userID int64, limit int, 
 	return u.fundRepository.GetByUserID(ctx, userID, limit, offset)
 }
 
-func (u *FundUsecase) AddMember(ctx context.Context, fund *domain.Fund, userID int64) error {
-	return u.fundRepository.AddMember(ctx, fund, userID)
-}
-
-func (u *FundUsecase) CreateMember(ctx context.Context, fund *domain.Fund, userID int64) error {
-	return u.fundRepository.AddMember(ctx, fund, userID)
+func (u *FundUsecase) AddMember(ctx context.Context, fundID int, userID int64) error {
+	return u.fundRepository.AddMember(ctx, fundID, userID)
 }
 
 func (u *FundUsecase) IsMember(ctx context.Context, fundID int, userID int64) (bool, error) {

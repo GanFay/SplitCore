@@ -2,10 +2,13 @@ package telegram
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"html"
 	"log/slog"
 	"os"
 	"strings"
+	"unicode/utf8"
 
 	"github.com/ganfay/split-core/internal/domain"
 	"github.com/ganfay/split-core/internal/pkg/utils"
@@ -50,7 +53,7 @@ func (h *BotHandler) HandleStart(c tele.Context) error {
 			return h.error(c, "Invite code not found", err.Error(), Reply)
 		}
 
-		err = h.fundUC.AddMember(ctx, fund, userCtx.InternalID)
+		err = h.fundUC.AddMember(ctx, fund.ID, userCtx.InternalID)
 		if err != nil {
 			return h.error(c, "Failed to join the fund", err.Error(), Reply)
 		}
@@ -98,6 +101,10 @@ func (h *BotHandler) HandleBack(c tele.Context) error {
 			"👇 <i>Choose an action below to get started:</i>"
 		return c.Edit(msg, h.MainMenu(), tele.ModeHTML)
 
+	case domain.StateWaitUsername, domain.StateSuccessAVU:
+		userCtx.State = domain.StateViewMembers
+		return h.HandleMembers(c)
+
 	default:
 		panic("unhandled default case")
 	}
@@ -117,6 +124,18 @@ func (h *BotHandler) OnText(c tele.Context) error {
 	defer save()
 
 	text := c.Text()
+	fullText := strings.TrimSpace(c.Text())
+
+	if fullText == "" {
+		err = errors.New("the name cannot be empty or consist solely of spaces. Please try again")
+		return h.error(c, err.Error(), err.Error(), Edit)
+	}
+
+	if utf8.RuneCountInString(fullText) > 30 {
+		err = errors.New("that name is too long! Let's go with something shorter (up to 30 characters) 😅")
+		return h.error(c, err.Error(), err.Error(), Edit)
+	}
+	fullText = html.EscapeString(fullText)
 	switch userCtx.State {
 	case domain.StateWaitExpense:
 		storedMsg := &tele.Message{ID: userCtx.LastMsgID, Chat: c.Chat()}
@@ -168,7 +187,7 @@ func (h *BotHandler) OnText(c tele.Context) error {
 			return h.error(c, "Failed to get fund", err.Error(), Edit)
 		}
 
-		err = h.fundUC.AddMember(ctx, fund, userCtx.InternalID)
+		err = h.fundUC.AddMember(ctx, fund.ID, userCtx.InternalID)
 		if err != nil {
 			if strings.Contains(err.Error(), "SQLSTATE 23505") {
 				storedMsg := &tele.Message{ID: userCtx.LastMsgID, Chat: c.Chat()}
@@ -189,6 +208,27 @@ func (h *BotHandler) OnText(c tele.Context) error {
 		}
 		userCtx.LastMsgID = ctxMsg.ID
 		slog.Info("Setting up fund join code", "id", userCtx.InternalID)
+	case domain.StateWaitUsername:
+		IID, err := h.userUC.CreateVirtualUser(ctx, fullText)
+		if err != nil {
+			return h.error(c, "Failed to create user", err.Error(), Edit)
+		}
+		err = h.fundUC.AddMember(ctx, userCtx.ActiveFundID, userCtx.InternalID)
+		if err != nil {
+			return h.error(c, "Failed to add fund", err.Error(), Edit)
+		}
+		userCtx.State = domain.StateSuccessAVU
+		storedMsg := &tele.Message{ID: userCtx.LastMsgID, Chat: c.Chat()}
+		msg := fmt.Sprintf(
+			"✅ Member <b>%s(IID: %d)</b> successfully added to the fund!\n\n"+
+				"<i>You can now select them when logging new expenses.</i> 🧾",
+			text, IID,
+		)
+		_, err = c.Bot().Edit(storedMsg, msg, h.BackMenu(), tele.ModeHTML)
+		if err != nil {
+			return h.error(c, "Failed to edit fund", err.Error(), Edit)
+		}
+
 	case domain.StateNone, domain.StateViewHistory, domain.StateFundMenu, domain.StateViewFund, domain.StateViewSettleUp, domain.StateViewMembers, domain.StateViewSuccessExp:
 		storedMsg := &tele.Message{ID: userCtx.LastMsgID, Chat: c.Chat()}
 		msg := "No answer"
