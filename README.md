@@ -34,7 +34,7 @@ The project is built with a strict separation of concerns, ensuring high testabi
 ## 📍 Roadmap
 
 ### ✅ MVP (Completed)
--[x] Clean Architecture setup and Dependency Injection.
+- [x] Clean Architecture setup and Dependency Injection.
 - [x] PostgreSQL integration with migrations.
 - [x] FSM for user input handling and seamless UX.
 - [x] Fund creation and unique Deep-Link generation.
@@ -46,7 +46,7 @@ The project is built with a strict separation of concerns, ensuring high testabi
 - [x] CI/CD Pipeline (GitHub Actions + golangci-lint).
 
 ### 🌟V1.1.0 
--[x] Virtual Users (Add members without Telegram accounts).
+- [x] Virtual Users (Add members without Telegram accounts).
 
 ### V1.1.1
 - [x] Deploy to VPS (DigitalOcean).
