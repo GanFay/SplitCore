@@ -1,1 +1,11 @@
-postgres-data/
+.dockerignore
+.git
+.idea
+.vscode
+postgres_data
+redis_data
+out
+*.dump
+.env
+bot
+

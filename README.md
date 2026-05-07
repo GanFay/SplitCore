@@ -1,3 +1,4 @@
+
 # 🚀 SplitCore — Telegram Expense Organizer
 
 [![SplitCore CI](https://github.com/GanFay/SplitCore/actions/workflows/ci.yml/badge.svg)](https://github.com/GanFay/SplitCore/actions/workflows/ci.yml)
@@ -7,10 +8,10 @@
 ## 🔥 The Core Idea
 Users create "Funds" (events), invite friends via unique deep-links, and record their expenses. The bot automatically calculates the balance: who overpaid and who needs to settle their debt using a greedy matching algorithm to minimize transactions.
 
-![SplitCore Demo.gif](demo2.gif)
+### 🎬 Demo
+*(Note: For the best experience, view the `.mp4` video directly if the GIF is buffering)*
 
-
-![SplitCore Demo.mp4](demo.mp4)
+![SplitCore Demo](demo2.gif)
 
 ## 🛠 Tech Stack
 * **Language:** Go (Golang) 1.26.2
@@ -25,14 +26,15 @@ Users create "Funds" (events), invite friends via unique deep-links, and record 
 The project is built with a strict separation of concerns, ensuring high testability and scalability:
 - `cmd/bot/` — Entry point, initialization, and Dependency Injection.
 - `internal/domain/` — Business entities, Data models, and Core interfaces.
-- `internal/repository/` — Database access layer (PostgreSQL implementation).
+- `internal/repository/` — Database access layer (PostgreSQL and Redis implementations).
 - `internal/usecase/` — Core business logic, math calculations, and data processing.
 - `internal/delivery/telegram/` — Bot-specific UI logic (handlers, menus, router).
-- `internal/pkg/` — Internal utilities (e.g., deep-link generators).
+- `internal/pkg/` — Internal utilities (e.g., deep-link generators, JSON encoders).
 
 ## 📍 Roadmap
-**MVP (Completed) ✅**
-- [x] Clean Architecture setup and Dependency Injection.
+
+### ✅ MVP (Completed)
+-[x] Clean Architecture setup and Dependency Injection.
 - [x] PostgreSQL integration with migrations.
 - [x] FSM for user input handling and seamless UX.
 - [x] Fund creation and unique Deep-Link generation.
@@ -43,27 +45,36 @@ The project is built with a strict separation of concerns, ensuring high testabi
 - [x] Table-Driven Unit Tests for the settlement math module.
 - [x] CI/CD Pipeline (GitHub Actions + golangci-lint).
 
-**V1.1.0
-- [x] Virtual Users (Add members without Telegram accounts).
+### 🌟V1.1.0 
+-[x] Virtual Users (Add members without Telegram accounts).
 
-**Enhancements (Future) 🚀**
-- [ ] Deploy to VPS (DigitalOcean).
-- [ ] Multi-currency support.
+### V1.1.1
+- [x] Deploy to VPS (DigitalOcean).
 
-## 🚀 Getting Started (Dev)
+### 🚀 Enhancements (Future)
+- [ ] **Secure Fund Deletion:** Creator-only access with FSM confirmation state to prevent accidental wipes.
+- [ ] **Expense Management:** Ability to delete or edit logged mistakes.
+- [ ] **Settle Debt feature:** "Mark as paid" logic to automatically adjust balances when someone returns the money.
+- [ ] **Export to CSV:** Generate and download fund reports on the fly.
+- [ ] **Multi-currency support.**
 
-### Required Docker, docker compose.
+## ⚙️ Getting Started (Dev)
+
+**Prerequisites:** Docker, Docker Compose, and Make.
 
 1. Clone the repository:
    ```bash
    git clone https://github.com/GanFay/SplitCore.git
    ```
-2. Set up environment variables in a `.env` file (Bot token, DB credentials).
-3. Start the database and application using Makefile:
+2. Set up environment variables. Copy the example file and fill in your details (Bot token, DB credentials):
+   ```bash
+   cp .env.example .env
+   ```
+3. Start the database and Redis using Makefile:
    ```bash
    make services-run
    ```
-4. Run migrations (if executing locally):
+4. Run migrations:
    ```bash
    make migrate-up
    ```
