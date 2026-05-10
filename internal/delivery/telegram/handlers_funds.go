@@ -2,6 +2,7 @@ package telegram
 
 import (
 	"context"
+	"errors"
 	"fmt"
 	"log/slog"
 	"strconv"
@@ -10,6 +11,7 @@ import (
 	_ "time/tzdata"
 
 	"github.com/ganfay/split-core/internal/domain"
+	"github.com/redis/go-redis/v9"
 
 	tele "gopkg.in/telebot.v4"
 )
@@ -325,32 +327,6 @@ func (h *BotHandler) HandleMembers(c tele.Context) error {
 	return err
 }
 
-func (h *BotHandler) getUserCtxH(c tele.Context, ctx context.Context) (*domain.UserContext, func(), error) {
-	id := &c.Sender().ID
-
-	userCtx, err := h.statesUC.GetUserCtx(ctx, id)
-	if err != nil {
-		_ = h.error(c, "Internal error try again later", err.Error(), Edit)
-		return nil, nil, err
-	}
-
-	if userCtx.InternalID == 0 {
-		internalID, err := h.userUC.GetOrCreateRealUser(ctx, id, c.Sender().Username, c.Sender().FirstName)
-		if err != nil {
-			_ = h.error(c, "Internal error try again later", err.Error(), Edit)
-		}
-		userCtx.InternalID = internalID
-	}
-
-	saveFunc := func() {
-		if saveErr := h.statesUC.SaveUserCtx(ctx, id, userCtx); saveErr != nil {
-			slog.Error("Failed to save user context", "err", saveErr)
-		}
-	}
-
-	return userCtx, saveFunc, nil
-}
-
 func (h *BotHandler) HandleWaitAddUser(c tele.Context) error {
 	ctx := context.Background()
 	userCtx, saveFunc, err := h.getUserCtxH(c, ctx)
@@ -428,4 +404,36 @@ func (h *BotHandler) HandleRemoveVUser(c tele.Context) error {
 	storedMsg := &tele.Message{ID: userCtx.LastMsgID, Chat: c.Chat()}
 	_, err = c.Bot().Edit(storedMsg, msg, h.BackMenu(), tele.ModeHTML)
 	return err
+}
+
+func (h *BotHandler) getUserCtxH(c tele.Context, ctx context.Context) (*domain.UserContext, func(), error) {
+	id := &c.Sender().ID
+
+	userCtx, err := h.statesUC.GetUserCtx(ctx, id)
+	if err != nil {
+		if errors.Is(err, redis.Nil) {
+			userCtx = &domain.UserContext{
+				State: domain.StateNone,
+			}
+		} else {
+			_ = h.error(c, "Internal error try again later", err.Error(), Edit)
+			return nil, nil, fmt.Errorf("redis error: %w", err)
+		}
+	}
+
+	if userCtx.InternalID == 0 {
+		internalID, err := h.userUC.GetOrCreateRealUser(ctx, id, c.Sender().Username, c.Sender().FirstName)
+		if err != nil {
+			_ = h.error(c, "Internal error try again later", err.Error(), Edit)
+		}
+		userCtx.InternalID = internalID
+	}
+
+	saveFunc := func() {
+		if saveErr := h.statesUC.SaveUserCtx(ctx, id, userCtx); saveErr != nil {
+			slog.Error("Failed to save user context", "err", saveErr)
+		}
+	}
+
+	return userCtx, saveFunc, nil
 }
