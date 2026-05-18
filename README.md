@@ -52,7 +52,11 @@ The project is built with a strict separation of concerns, ensuring high testabi
 - [x] Deploy to VPS (DigitalOcean).
 
 ### V1.1.2
+- [x] Cache miss fix
+
+### V1.1.3
 - [x] **Secure Fund Deletion:** Creator-only access with FSM confirmation state to prevent accidental wipes.
+
 
 ### 🚀 Enhancements (Future)
 - [ ] **Expense Management:** Ability to delete or edit logged mistakes.
